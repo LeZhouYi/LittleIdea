@@ -63,3 +63,56 @@ def getCombination(numberList:list[int],combineCount:int)->list:
 
 ## 问题二
 给定一个数集numberList，求数集所有数字按任意顺序排列的所有可能的集
+
+### 设定
+
+1. 设定数集numberList的数字不重复，且len(numberList)>=2
+2. 其余情况则返回本身或None
+
+### 实现
+
+#### 一、主逻辑实现
+
+1. 存储所有排列可能的集为combineList，length=len(numberList)
+2. 临时存储过程可能的组合集为tempStack,tempStack2
+3. 将[numberList[0]]添加进tempStack
+4. 开始循环，从1到length-1，变量名为index:
+5. 依次遍历tempStack中的所有组合，变量为tempBind:
+6. [numberList[index]].extend(tempBind)并将该数列添加进tempStack2
+7. 开始循环，从0到index-1，且0!=index，变量为insertIndex:
+8. 将tempBind拷贝并将numList[index]插入至tempBind的insertIndex位置上，并将结果添加至tempStack2
+9. 将tempBind.extend([numberList[index]])并将该数列添加进tempStack2
+10. 结束insertIndex的循环
+11. 结束tempStack的循环
+11. 将tempStack2的数据拷贝到tempStack,并清空tempStack2
+12. 结束index的循环
+
+#### 二、主要想法
+
+1. numberList=[1]时，结果=```[[1]]```
+2. numberList=[1,2]时，结果=```[[1,2],[2,1]]```
+3. 以此类推，即第n个的组合排序为第n-1个的组合排序插入新的数字组合形成
+
+#### 三、代码实现
+
+```python 3.10
+def getNumberOrderlyCombine(numberList:list[int])->list|None:
+    if numberList==None or len(numberList)<=1:
+        return numberList
+    length = len(numberList)
+    combineList = []
+    tempStack,tempStack2 = [],[]
+    for index in range(length):
+        if index==0:
+            tempStack.append([numberList[index]])
+            continue
+        for tempList in tempStack:
+            for insertIndex in range(index+1):
+                tempCombine = copy.deepcopy(tempList)
+                tempCombine.insert(insertIndex,numberList[index])
+                tempStack2.append(tempCombine)
+        tempStack = tempStack2
+        tempStack2 = []
+    combineList.extend(tempStack)
+    return combineList
+```
