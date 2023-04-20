@@ -9,7 +9,7 @@ def toUnicode(text:str)->str:
     '''将文本包含中文的部分转为unicode字符串'''
     toText = ""
     for char in text:
-        if '\u4e00' <= char <= '\u9fff':
+        if '\u4e00' <= char <= '\u9fff' or char=='\uff0c':
             toText+= hex(ord(char)).upper().replace('0X','\\u')
         else:
             toText+=char
