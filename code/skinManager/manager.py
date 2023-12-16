@@ -19,6 +19,9 @@ class Manager:
     def getModsPath(self) -> str | None:
         return self.modsPath
 
+    def setModsPath(self, modsPath:str):
+        self.modsPath = modsPath
+
     def loadByFile(self):
         """从文件中读取数据"""
         jsonData = None
@@ -27,6 +30,5 @@ class Manager:
             with open(file, encoding="utf-8") as f:
                 jsonData = json.load(f)
         if jsonData != None:
-            print(jsonData)
             self.skinSourcePath = jsonData["skinSourcePath"]
             self.modsPath = jsonData["modsPath"]

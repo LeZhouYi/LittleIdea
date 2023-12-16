@@ -1,7 +1,12 @@
 import tkinter as tk
 
+def isEmpty(valueStr:str)->bool:
+    '''判断字符串非空'''
+    return valueStr == None or valueStr == ""
+
 def isPhoto(fileName:str)->bool:
-    return fileName.endswith(".png") or fileName.endswith(".PNG")
+    '''判断当前文件为图片'''
+    return fileName.endswith(".png") or fileName.endswith(".PNG") or fileName.endswith(".jpg")
 
 def centerWindow(window:tk.Tk,width:int,height:int):
     '''
