@@ -19,8 +19,8 @@ ROLE_KEYS =[
 ]
 
 FONT = ("微软雅黑", 12)
-
 FILE = "./data.json"
+TITLE = "Genshin Skin Manager @Skily_Leyu"
 
 def existRole(fileName: str) -> bool:
     return fileName in ROLE_KEYS
