@@ -237,7 +237,7 @@ class MainFrame:
         """选择皮肤路径"""
         filePath = askdirectory()
         if not utils.isEmpty(filePath):
-            self.skinPathText.config(text=filePath)
+            self.label101.config(text=filePath)
             self.manager.setSkinPath(filePath)
             self.initRolesContent()
 
@@ -245,7 +245,7 @@ class MainFrame:
         """选择3dmigoto mods 文件夹"""
         filePath = askdirectory()
         if not utils.isEmpty(filePath):
-            self.modPathText.config(text=filePath)
+            self.label111.config(text=filePath)
             self.manager.setModsPath(filePath)
 
     def chooseSkin(self, event, dirname: str):
