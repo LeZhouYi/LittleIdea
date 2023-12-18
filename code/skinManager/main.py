@@ -173,12 +173,6 @@ class MainFrame:
                     images = self.getSkinImages(pathTemp)  # 加载该路径所有图片
                     for image in images:
                         self.addSkinImageBtn(dirTemp, image)
-            # for filename in os.listdir(skinPath):
-            #     if utils.isPhoto(filename):
-            #         pathStr = os.path.join(skinPath,filename)
-            #         images = self.getSkinImages(skinPath + "/" + pathStr)
-            #         for image in images:
-            #             self.addSkinImageBtn(pathStr, image)
 
     def addSkinImageBtn(self, dirname: str, image: tk.PhotoImage):
         """将图片及文件名制作成相框添加"""

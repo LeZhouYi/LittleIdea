@@ -21,27 +21,64 @@ class RoleKey:
         "YanFei"
     ]
 
+    roleKeyText = {
+        "Amber":"安柏",
+        "Barbara":"芭芭拉",
+        "Charlotte":"夏洛蒂",
+        "Collei":"柯莱",
+        "Fischl":"菲谢尔",
+        "Furina":"芙宁娜",
+        "HuTao":"胡桃",
+        "Kirara":"绮良良",
+        "Lisa":"丽莎",
+        "Lumine":"荧",
+        "Lynette":"琳妮特",
+        "Noelle":"诺艾尔",
+        "QiQi":"七七",
+        "Sucrose":"砂糖",
+        "XiangLing":"香菱",
+        "XingQiu":"行秋",
+        "YanFei":"烟绯"
+    }
+
     def existRole(fileName: str) -> bool:
+        """判断是否存在角色"""
         return fileName in RoleKey.roleKey
 
+    def getRoleText(fileName:str)->str:
+        """返回当前角色对应角色名"""
+        if fileName in RoleKey.roleKeyText:
+            return RoleKey.roleKeyText[fileName]
+        return ""
+
 class FrameConfig:
-    font = ("微软雅黑", 12)
-    dataFile = "./data.json"
-    frameTitle = "Genshin Skin Manager @Skily_Leyu"
+    font = ("微软雅黑", 12) #默认字体
+    dataFile = "./data.json" #默认数据储存位置
+    frameTitle = "Genshin Skin Manager @Skily_Leyu" #窗体标题
+    roleIconSize = (120, 160)
+    defaultRole = "src/default_role.jpeg"
+    defaultRoleKey = "defalut"
 
 class FrameKey:
-    SideBar = 'sideBar'
-    SideBarParent = 'sideBarParent'
+    SideBar = 'sideBar' #侧边栏
+    SideBarParent = 'sideBarParent' #侧边栏主框架，用于刷新滚动区域
 
-    Page = 'page'
-    SkinTitle = 'skinTitle'
-    SkinSourcePath = 'skinSourcePath'
+    Page = 'page' #内容页
+    SkinTitle = 'skinTitle' #皮肤管理页，标题栏
+    SkinSourcePath = 'skinSourcePath' #皮肤管理页，标题栏，皮肤库
+    ModSourcePath = 'modSourcePath' #皮肤管理页，标题栏，Mods文件夹
+    SkinContent = 'skinContent' #皮肤内容页，主框架
+    SkinContentFrame = 'skinContentFrame' #皮肤内容页，用于添加皮肤控件
 
-    InfoCanvas = 'canvas'
-    InfoScroll = 'scroll'
+    InfoCanvas = 'canvas' #滚动画布关键字
+    InfoScroll = 'scroll' #滚动画布滚动方向关键字
 
 class Event:
+    #键盘事件
     F4 = "<Key-F4>"
     Escape = "<Escape>"
-    MouseWheel = "<MouseWheel>"
     Tab = "<Tab>"
+
+    #鼠标事件
+    MouseWheel = "<MouseWheel>" #滚轮滚动
+    MouseLefClick = "<Button-1>" #鼠标左键

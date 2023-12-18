@@ -19,15 +19,19 @@ class MainFrame:
 
         # 基本配置
         self.initWindow()
-        self.initFrameData() #初始化数据
+        self.initFrameData()  # 初始化数据
         self.initWidgetPool()  # 初始化控件池
         self.initSideBar()  # 初始化侧边栏
         self.initSideBarContent()  # 初始化侧边栏内容
         self.initPage()  # 初始化页面
         self.initSkinManagerPage()  # 初始化皮肤管理页面
+        self.initRoleListPage()  # 初始化角色选择列表页面
+        self.updateRoleList()  # 更新角色列表页面
         self.mainWindow.mainloop()  # 显示窗口
 
-    ####################init############################
+    ####################init&update############################
+    #Init表示只会执行一次
+    #Update表示会清空相关页面内容并重新渲染
 
     def initWindow(self):
         """初始化窗口"""
@@ -35,12 +39,13 @@ class MainFrame:
         self.mainWindow.attributes("-fullscreen", True)  # 全屏
         self.mainWindow.bind(Event.F4, self.close)  # F4退出程序
         self.mainWindow.bind(Event.Escape, self.close)
-        self.mainWindow.bind(Event.Tab,self.switchSideBar)#切换侧边栏
+        self.mainWindow.bind(Event.Tab, self.switchSideBar)  # 切换侧边栏
         self.baseFont = FrameConfig.font  # 设置字体
 
     def initFrameData(self):
         """初始化框架相关数据"""
-        self.sideBarSwitch=True #默认展开侧边栏
+        self.sideBarSwitch = True  # 默认展开侧边栏
+        self.roleImagePool = {}  # 角色图片池
 
     def initWidgetPool(self):
         """初始化控件池"""
@@ -87,19 +92,20 @@ class MainFrame:
         skinManagerBtn = tk.Button(mainFrame, text="皮肤管理", font=self.baseFont, width=15)
         skinManagerBtn.pack(side=tk.BOTTOM, fill=tk.X)
         self.addNoReferWidget(skinManagerBtn, FrameKey.SideBar)
-        self.updateSideFrame()
+        self.updateScrollFrame(FrameKey.SideBarParent, FrameKey.SideBar)
 
-    def updateSideFrame(self):
-        """更新侧边栏"""
-        self.getBaseFrame(FrameKey.SideBarParent).update()
-        canvasInfo = self.getScrollCanvas(FrameKey.SideBar)
-        frame = self.getBaseFrame(FrameKey.SideBar)
+    def updateScrollFrame(self, parentKey: str, framekey: str):
+        """更新侧边栏,内容框架与其父组件的画布应所属同一FrameKey"""
+        self.getBaseFrame(parentKey).update()
+        canvasInfo = self.getScrollCanvas(framekey)
+        frame = self.getBaseFrame(framekey)
         if canvasInfo != None and frame != None:
             canvas = canvasInfo[FrameKey.InfoCanvas]
             if canvas != None and isinstance(canvas, tk.Canvas):
                 canvas.config(
                     scrollregion=frame.bbox(tk.ALL),
                     width=frame.winfo_width(),
+                    height=frame.winfo_height(),
                 )  # 设定画布可滚区域及自适应内容
 
     def initPage(self):
@@ -124,8 +130,11 @@ class MainFrame:
         skinSourceSetBtn = tk.Button(skinSourceFrame, text="更新", font=FrameConfig.font)
         skinSourceSetBtn.pack(side=tk.RIGHT)
         self.addNoReferWidget(skinSourceSetBtn, FrameKey.SkinTitle)
-        skinSource = tk.Label(skinSourceFrame, text="请选择皮肤库路径", font=FrameConfig.font)
+        skinSource = tk.Label(
+            skinSourceFrame, text=self.getSkinPathText(), font=FrameConfig.font
+        )
         skinSource.pack(side=tk.TOP, fill=tk.BOTH, expand=1)
+        skinSource.bind(Event.MouseLefClick, self.selectSkinSource)  # 选择皮肤路径事件
         self.addReferWidget(skinSource, FrameKey.SkinSourcePath)
 
         modSourceFrame = tk.Frame(skinTitleFrame)  # 皮肤标题第二行
@@ -138,9 +147,87 @@ class MainFrame:
         modSourceBtn.pack(side=tk.RIGHT)
         self.addNoReferWidget(modSourceBtn, FrameKey.SkinTitle)
         modSource = tk.Label(
-            modSourceFrame, text="请选择3Dmigoto Mods路径", font=FrameConfig.font
-        )
+            modSourceFrame, text=self.getModPathText(), font=FrameConfig.font
+        )  # 3dmigoto目标路径
         modSource.pack(side=tk.TOP, fill=tk.BOTH, expand=1)
+        self.addReferWidget(modSource, FrameKey.ModSourcePath)
+
+        skinContentFrame = tk.Frame(pageFrame, background="brown")  # 显示皮肤内容一栏
+        skinContentFrame.pack(side=tk.TOP, fill=tk.BOTH, expand=1)
+        self.addBaseFrame(skinContentFrame, FrameKey.SkinContent)
+
+    def initRoleListPage(self):
+        """初始化角色列表页面"""
+        skincontentFrame = self.getBaseFrame(FrameKey.SkinContent)
+
+        roleListCanvas = tk.Canvas(skincontentFrame, background="pink")  # 角色选择页面画布
+        roleListScrollX = tk.Scrollbar(
+            skincontentFrame, orient=tk.HORIZONTAL, width=2, background="green"
+        )  # 横向滚动条
+        roleListScrollY = tk.Scrollbar(
+            skincontentFrame, orient=tk.VERTICAL, width=2, background="blue"
+        )  # 竖向滚动条
+        roleListCanvas.config(
+            xscrollcommand=roleListScrollX.set,
+            xscrollincrement=1,
+            yscrollcommand=roleListScrollY.set,
+            yscrollincrement=1,
+        )  # 画布关联滚动条
+        roleListScrollX.config(command=roleListCanvas.xview)  # 滚动条关联画布
+        roleListScrollY.config(command=roleListCanvas.yview)
+        roleListScrollX.pack(side=tk.BOTTOM, fill=tk.X)
+        roleListScrollY.pack(side=tk.RIGHT, fill=tk.Y)
+        roleListCanvas.pack(side=tk.TOP, fill=tk.BOTH, expand=1)
+
+        roleListFrame = tk.Frame(roleListCanvas, background="white", borderwidth=5)
+        roleListCanvas.create_window(0, 0, window=roleListFrame, anchor=tk.NW)
+        self.addNoReferWidget(roleListScrollX, FrameKey.SkinContent)
+        self.addNoReferWidget(roleListScrollY, FrameKey.SkinContent)
+        self.addScrollCanvas(
+            roleListCanvas, FrameKey.SkinContentFrame, tk.BOTH
+        )  # 缓存滚动画布
+        self.addBaseFrame(roleListFrame, FrameKey.SkinContentFrame)  # 缓存动态主组件
+
+    def updateRoleList(self):
+        """更新角色列表控件"""
+        self.clearWidgetPool(FrameKey.SkinContentFrame)  # 清空角色内容页
+
+        skinSourcePath = self.manager.getSkinPath()  # 皮肤库路径
+        if skinSourcePath != None and os.path.exists(skinSourcePath):
+            roleIndex = 0
+            roleListFrame = self.getBaseFrame(FrameKey.SkinContentFrame)
+            for roleDir in os.listdir(skinSourcePath):
+                rolePath = os.path.join(skinSourcePath, roleDir)
+                if os.path.isdir(rolePath) and RoleKey.existRole(roleDir):
+                    imageIcon = self.getRoleImage(roleDir, rolePath)
+                    rowIndex = (roleIndex // 10) + 1
+                    columnIndex = (roleIndex % 10) + 1
+
+                    imageFrame = tk.Frame(roleListFrame)  # 单个角色框架
+                    imageFrame.grid(row=rowIndex, column=columnIndex)
+                    self.addNoReferWidget(imageFrame, FrameKey.SkinContentFrame)
+
+                    imageBtn = tk.Button(imageFrame, image=imageIcon)  # 角色图片按钮
+                    imageBtn.pack(side=tk.TOP)
+                    imageBtn.bind(Event.MouseLefClick,utils.eventAdaptor(self.clickSelectRole,key=roleDir))
+                    self.addNoReferWidget(imageFrame, FrameKey.SkinContentFrame)
+
+                    imageLabel = tk.Label(
+                        imageFrame,
+                        text=RoleKey.getRoleText(roleDir),
+                        font=FrameConfig.font,
+                    )  # 角色名
+                    imageLabel.pack(side=tk.TOP)
+                    self.addNoReferWidget(imageFrame, FrameKey.SkinContentFrame)
+
+                    roleIndex += 1
+
+        self.updateScrollFrame(FrameKey.SkinContent, FrameKey.SkinContentFrame)
+
+    def updateSkinListPage(self):
+        """更新单个角色的皮肤列表"""
+        self.clearWidgetPool(FrameKey.SkinContentFrame)  # 清空角色内容页
+        self.updateScrollFrame(FrameKey.SkinContent, FrameKey.SkinContentFrame)
 
     ####################getter&setter#####################
 
@@ -160,7 +247,48 @@ class MainFrame:
             return self.baseFramePool[key]
         return None
 
+    def getSkinPathText(self) -> str:
+        """获取皮肤路径"""
+        path = self.manager.getSkinPath()
+        return path if path != None else "请选择皮肤库路径"
+
+    def getModPathText(self) -> str:
+        """获取mods文件夹路径"""
+        path = self.manager.getModsPath()
+        return path if path != None else "请选择3Dmigoto Mods路径"
+
+    def getRoleImage(self, key: str, path: str) -> tk.PhotoImage:
+        """获取该文件夹下的第一张图片作为角色图片"""
+        for fileName in os.listdir(path):
+            filePath = os.path.join(path, fileName)
+            if os.path.isfile(filePath) and utils.isPhoto(filePath):
+                image = Image.open(filePath).resize(FrameConfig.roleIconSize)
+                image = ImageTk.PhotoImage(image)
+                self.addRoleImage(image, key)
+                return image
+        return self.getDefaultRoleImage()
+
+    def getReferWidget(self, key: str) -> tk.Widget | None:
+        """获取动态控件"""
+        if key in self.referPool:
+            return self.referPool[key]
+        return None
+
     #####################Add&Modify&Delete##############
+
+    def getDefaultRoleImage(self) -> tk.PhotoImage:
+        """获取默认的角色图片"""
+        if FrameConfig.defaultRoleKey not in self.roleImagePool:
+            image = Image.open(sys.path[0] + "/" + FrameConfig.defaultRole).resize(
+                FrameConfig.roleIconSize
+            )
+            image = ImageTk.PhotoImage(image)
+            self.addRoleImage(image, FrameConfig.defaultRoleKey)
+        return self.roleImagePool[FrameConfig.defaultRoleKey]
+
+    def addRoleImage(self, image: tk.PhotoImage, key: str):
+        """缓存角色图片"""
+        self.roleImagePool[key] = image
 
     def addBaseWidget(self, widget: tk.Widget):
         """缓存基础控件"""
@@ -188,6 +316,21 @@ class MainFrame:
     def addReferWidget(self, widget: tk.Widget, key: str):
         """缓存被引用的控件"""
         self.referPool[key] = widget
+
+    def clearWidgetPool(self, key: str):
+        """清空控件池"""
+        if key in self.referPool:
+            referWidgets = self.referPool[key]
+            for widget in referWidgets:
+                if isinstance(widget, tk.Widget):
+                    widget.destroy()
+            self.referPool[key] = []
+        if key in self.noReferPool:
+            noReferWidgets = self.noReferPool[key]
+            for widget in noReferWidgets:
+                if isinstance(widget, tk.Widget):
+                    widget.destroy()
+            self.noReferPool[key] = []
 
     ####################Function#########################
     def bindScrollEvent(self, widget: tk.Widget, key: str):
@@ -232,7 +375,7 @@ class MainFrame:
         """画布上下滚动事件"""
         widget.yview_scroll(-1 * (event.delta // 5), tk.UNITS)
 
-    def switchSideBar(self,event):
+    def switchSideBar(self, event):
         """展开、关闭侧边栏"""
         canvasInfo = self.getScrollCanvas(FrameKey.SideBar)
         if canvasInfo != None:
@@ -242,9 +385,25 @@ class MainFrame:
                     canvas.pack_forget()
                 else:
                     canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=1)
-                    self.updateSideFrame()
+                    self.updateScrollFrame(FrameKey.SideBarParent, FrameKey.SideBar)
                 self.sideBarSwitch = not self.sideBarSwitch
 
+    def selectSkinSource(self, event):
+        """选择皮肤库路径"""
+        filePath = askdirectory()
+        skinLabel = self.getReferWidget(FrameKey.SkinSourcePath)
+        if (
+            not utils.isEmpty(filePath)
+            and skinLabel != None
+            and isinstance(skinLabel, tk.Label)
+        ):
+            skinLabel.config(text=filePath)
+            self.manager.setSkinPath(filePath)
+            self.updateRoleList()
+
+    def clickSelectRole(self, event, key:str):
+        """点击某一角色图标"""
+        self.updateSkinListPage()
 
     ####################debugger########################
 
@@ -257,6 +416,16 @@ class MainFrame:
                 widget, background="gray", text=str(i), width=width, height=height
             )
             button.pack(side=tk.TOP, fill=tk.X, expand=1)
+
+    def testHoriScrollBar(
+        self, widget: tk.Widget, amount: int, width: int, height: int
+    ):
+        """测试竖直方式的滚动条"""
+        for i in range(amount):
+            button = tk.Button(
+                widget, background="gray", text=str(i), width=width, height=height
+            )
+            button.pack(side=tk.LEFT, fill=tk.Y, expand=1)
 
     def addTestWidget(self, widget: tk.Widget):
         """添加测试控件"""
