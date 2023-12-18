@@ -44,3 +44,4 @@ class Event:
     F4 = "<Key-F4>"
     Escape = "<Escape>"
     MouseWheel = "<MouseWheel>"
+    Tab = "<Tab>"

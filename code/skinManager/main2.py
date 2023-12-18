@@ -9,7 +9,7 @@ from PIL import Image, ImageTk
 from tkinter import ttk
 from threading import Thread
 from time import sleep
-from data2 import RoleKey,FrameConfig,FrameKey,Event
+from data2 import RoleKey, FrameConfig, FrameKey, Event
 
 
 class MainFrame:
@@ -19,11 +19,12 @@ class MainFrame:
 
         # 基本配置
         self.initWindow()
+        self.initFrameData() #初始化数据
         self.initWidgetPool()  # 初始化控件池
         self.initSideBar()  # 初始化侧边栏
         self.initSideBarContent()  # 初始化侧边栏内容
         self.initPage()  # 初始化页面
-        self.initSkinManagerPage() #初始化皮肤管理页面
+        self.initSkinManagerPage()  # 初始化皮肤管理页面
         self.mainWindow.mainloop()  # 显示窗口
 
     ####################init############################
@@ -34,7 +35,12 @@ class MainFrame:
         self.mainWindow.attributes("-fullscreen", True)  # 全屏
         self.mainWindow.bind(Event.F4, self.close)  # F4退出程序
         self.mainWindow.bind(Event.Escape, self.close)
-        self.baseFont = FrameConfig.font #设置字体
+        self.mainWindow.bind(Event.Tab,self.switchSideBar)#切换侧边栏
+        self.baseFont = FrameConfig.font  # 设置字体
+
+    def initFrameData(self):
+        """初始化框架相关数据"""
+        self.sideBarSwitch=True #默认展开侧边栏
 
     def initWidgetPool(self):
         """初始化控件池"""
@@ -43,7 +49,7 @@ class MainFrame:
 
         self.scrollCanvasPool = {}  # 可滚动画布缓存，用于绑定画布的滚动事件(被引用)
         self.noReferPool = {}  # 动态缓存控件（会被清空，不会被引用）
-        self.referPool = {} #动态缓存控件（会被清空，会被引用）
+        self.referPool = {}  # 动态缓存控件（会被清空，会被引用）
 
         self.testWidgetPool = []  # 测试用缓存
 
@@ -73,14 +79,14 @@ class MainFrame:
         self.addBaseWidget(sideBarScroll)
         self.addScrollCanvas(sideBarCanvas, FrameKey.SideBar, tk.Y)  # 缓存滚动画布
         self.addBaseFrame(sideBarScrollFrame, FrameKey.SideBar)  # 缓存动态主组件
-        self.addBaseFrame(sideBarFrame,FrameKey.SideBarParent)
+        self.addBaseFrame(sideBarFrame, FrameKey.SideBarParent)
 
     def initSideBarContent(self):
         """初始化侧边栏动态控件"""
         mainFrame = self.getBaseFrame(FrameKey.SideBar)
         skinManagerBtn = tk.Button(mainFrame, text="皮肤管理", font=self.baseFont, width=15)
         skinManagerBtn.pack(side=tk.BOTTOM, fill=tk.X)
-        self.addNoReferWidget(skinManagerBtn,FrameKey.SideBar)
+        self.addNoReferWidget(skinManagerBtn, FrameKey.SideBar)
         self.updateSideFrame()
 
     def updateSideFrame(self):
@@ -100,27 +106,41 @@ class MainFrame:
         """初始化内容页面"""
         pageFrame = tk.Frame(self.getMainFrame(), background="green")  # 页面栏基础框
         pageFrame.pack(side=tk.LEFT, fill=tk.BOTH, expand=1)
-        self.addBaseFrame(pageFrame,FrameKey.Page)
+        self.addBaseFrame(pageFrame, FrameKey.Page)
 
     def initSkinManagerPage(self):
         """初始化皮肤管理页面"""
         pageFrame = self.getBaseFrame(FrameKey.Page)
-        skinTitleFrame = tk.Frame(pageFrame)#显示皮肤标题一栏
-        skinTitleFrame.pack(side=tk.TOP,fill=tk.X)
-        self.addNoReferWidget(skinTitleFrame,FrameKey.SkinTitle)
+        skinTitleFrame = tk.Frame(pageFrame)  # 显示皮肤标题一栏
+        skinTitleFrame.pack(side=tk.TOP, fill=tk.X)
+        self.addNoReferWidget(skinTitleFrame, FrameKey.SkinTitle)
 
-        skinSourceFrame = tk.Frame(skinTitleFrame) #皮肤标题第一行
-        skinSourceFrame.pack(side=tk.TOP,fill=tk.X)
-        self.addNoReferWidget(skinSourceFrame,FrameKey.SkinTitle)
-        skinSourceLabel = tk.Label(skinSourceFrame,text="皮肤库",font=FrameConfig.font)
+        skinSourceFrame = tk.Frame(skinTitleFrame)  # 皮肤标题第一行
+        skinSourceFrame.pack(side=tk.TOP, fill=tk.X)
+        self.addNoReferWidget(skinSourceFrame, FrameKey.SkinTitle)
+        skinSourceLabel = tk.Label(skinSourceFrame, text="皮肤库", font=FrameConfig.font)
         skinSourceLabel.pack(side=tk.LEFT)
-        self.addNoReferWidget(skinSourceLabel,FrameKey.SkinTitle)
-        skinSource = tk.Label(skinSourceFrame,text="请选择皮肤库路径",font=FrameConfig.font)
-        skinSource.pack(side=tk.LEFT,fill=tk.X)
-        self.addReferWidget(skinSource,FrameKey.SkinSourcePath)
-        skinSourceSetBtn = tk.Button(skinSourceFrame,text="更新",font=FrameConfig.font)
-        skinSourceSetBtn.pack(side=tk.LEFT)
-        self.addNoReferWidget(skinSourceSetBtn,FrameKey.SkinTitle)
+        self.addNoReferWidget(skinSourceLabel, FrameKey.SkinTitle)
+        skinSourceSetBtn = tk.Button(skinSourceFrame, text="更新", font=FrameConfig.font)
+        skinSourceSetBtn.pack(side=tk.RIGHT)
+        self.addNoReferWidget(skinSourceSetBtn, FrameKey.SkinTitle)
+        skinSource = tk.Label(skinSourceFrame, text="请选择皮肤库路径", font=FrameConfig.font)
+        skinSource.pack(side=tk.TOP, fill=tk.BOTH, expand=1)
+        self.addReferWidget(skinSource, FrameKey.SkinSourcePath)
+
+        modSourceFrame = tk.Frame(skinTitleFrame)  # 皮肤标题第二行
+        modSourceFrame.pack(side=tk.TOP, fill=tk.X)
+        self.addNoReferWidget(modSourceFrame, FrameKey.SkinTitle)
+        modSourceLabel = tk.Label(modSourceFrame, text="Mods", font=FrameConfig.font)
+        modSourceLabel.pack(side=tk.LEFT)
+        self.addNoReferWidget(skinSourceLabel, FrameKey.SkinTitle)
+        modSourceBtn = tk.Button(modSourceFrame, text="更新", font=FrameConfig.font)
+        modSourceBtn.pack(side=tk.RIGHT)
+        self.addNoReferWidget(modSourceBtn, FrameKey.SkinTitle)
+        modSource = tk.Label(
+            modSourceFrame, text="请选择3Dmigoto Mods路径", font=FrameConfig.font
+        )
+        modSource.pack(side=tk.TOP, fill=tk.BOTH, expand=1)
 
     ####################getter&setter#####################
 
@@ -148,23 +168,26 @@ class MainFrame:
 
     def addScrollCanvas(self, widget: tk.Canvas, key: str, scroll: str):
         """缓存可滚动的画布"""
-        self.scrollCanvasPool[key] = {FrameKey.InfoCanvas: widget, FrameKey.InfoScroll: scroll}
+        self.scrollCanvasPool[key] = {
+            FrameKey.InfoCanvas: widget,
+            FrameKey.InfoScroll: scroll,
+        }
 
     def addBaseFrame(self, widget: tk.Frame, key: str):
         """缓存动态变化的主组件"""
         self.baseFramePool[key] = widget
 
-    def addNoReferWidget(self,widget:tk.Widget,key:str):
+    def addNoReferWidget(self, widget: tk.Widget, key: str):
         """缓存不会被引用的控件"""
         if key not in self.noReferPool:
             self.noReferPool[key] = []
         self.noReferPool[key].append(widget)
         if key in self.scrollCanvasPool:
-            self.bindScrollEvent(widget,key) #绑定控件事件
+            self.bindScrollEvent(widget, key)  # 绑定控件事件
 
-    def addReferWidget(self,widget:tk.Widget,key:str):
+    def addReferWidget(self, widget: tk.Widget, key: str):
         """缓存被引用的控件"""
-        self.referPool[key]=widget
+        self.referPool[key] = widget
 
     ####################Function#########################
     def bindScrollEvent(self, widget: tk.Widget, key: str):
@@ -209,6 +232,20 @@ class MainFrame:
         """画布上下滚动事件"""
         widget.yview_scroll(-1 * (event.delta // 5), tk.UNITS)
 
+    def switchSideBar(self,event):
+        """展开、关闭侧边栏"""
+        canvasInfo = self.getScrollCanvas(FrameKey.SideBar)
+        if canvasInfo != None:
+            canvas = canvasInfo[FrameKey.InfoCanvas]
+            if canvas != None and isinstance(canvas, tk.Canvas):
+                if self.sideBarSwitch:
+                    canvas.pack_forget()
+                else:
+                    canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=1)
+                    self.updateSideFrame()
+                self.sideBarSwitch = not self.sideBarSwitch
+
+
     ####################debugger########################
 
     def testVerticalScrollBar(
@@ -227,7 +264,7 @@ class MainFrame:
 
     def testEvent(self, event, widget: tk.Canvas):
         """测试事件"""
-        widget.yview_scroll(10,tk.UNITS)
+        widget.yview_scroll(10, tk.UNITS)
 
 
 if __name__ == "__main__":
