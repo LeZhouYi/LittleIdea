@@ -55,9 +55,11 @@ class FrameConfig:
     font = ("微软雅黑", 12) #默认字体
     dataFile = "./data.json" #默认数据储存位置
     frameTitle = "Genshin Skin Manager @Skily_Leyu" #窗体标题
-    roleIconSize = (120, 160)
-    defaultRole = "src/default_role.jpeg"
-    defaultRoleKey = "defalut"
+    roleIconSize = (120, 160) #角色图标尺寸
+    roleSkinSize = (230, 450) #默认角色皮肤尺寸
+    defaultRole = "src/default_role.jpeg" #默认角色图片路径
+    defaultRoleKey = "defalut" #默认角色Key
+    skinControlWidth = 220 #皮肤操作界面宽度
 
 class FrameKey:
     SideBar = 'sideBar' #侧边栏
@@ -69,6 +71,8 @@ class FrameKey:
     ModSourcePath = 'modSourcePath' #皮肤管理页，标题栏，Mods文件夹
     SkinContent = 'skinContent' #皮肤内容页，主框架
     SkinContentFrame = 'skinContentFrame' #皮肤内容页，用于添加皮肤控件
+    SkinControl = "skinControl" #皮肤操作页，主框架
+    RoleDisplay = "roleDisplay" #已选角色展示图标
 
     InfoCanvas = 'canvas' #滚动画布关键字
     InfoScroll = 'scroll' #滚动画布滚动方向关键字

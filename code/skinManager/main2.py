@@ -30,8 +30,8 @@ class MainFrame:
         self.mainWindow.mainloop()  # 显示窗口
 
     ####################init&update############################
-    #Init表示只会执行一次
-    #Update表示会清空相关页面内容并重新渲染
+    # Init表示只会执行一次
+    # Update表示会清空相关页面内容并重新渲染
 
     def initWindow(self):
         """初始化窗口"""
@@ -46,6 +46,8 @@ class MainFrame:
         """初始化框架相关数据"""
         self.sideBarSwitch = True  # 默认展开侧边栏
         self.roleImagePool = {}  # 角色图片池
+        self.selectRoleKey = None  # 当前选择的角色
+        self.skinImagePool = []  # 角色皮肤图片池
 
     def initWidgetPool(self):
         """初始化控件池"""
@@ -152,6 +154,19 @@ class MainFrame:
         modSource.pack(side=tk.TOP, fill=tk.BOTH, expand=1)
         self.addReferWidget(modSource, FrameKey.ModSourcePath)
 
+        skinControlFrame = tk.Frame(pageFrame, background="yellow")  # 显示皮肤操作一栏
+        skinControlFrame.pack(side=tk.LEFT, fill=tk.Y)
+        self.addBaseFrame(skinControlFrame, FrameKey.SkinControl)
+
+        roleSelectDisplay = tk.Label(
+            skinControlFrame,
+            image=self.getDefaultRoleImage(),
+            background="blue",
+            width=FrameConfig.skinControlWidth,
+        )  # 显示当前选择的角色图标
+        roleSelectDisplay.pack(side=tk.TOP, fill=tk.X)
+        self.addReferWidget(roleSelectDisplay, FrameKey.RoleDisplay)
+
         skinContentFrame = tk.Frame(pageFrame, background="brown")  # 显示皮肤内容一栏
         skinContentFrame.pack(side=tk.TOP, fill=tk.BOTH, expand=1)
         self.addBaseFrame(skinContentFrame, FrameKey.SkinContent)
@@ -209,7 +224,10 @@ class MainFrame:
 
                     imageBtn = tk.Button(imageFrame, image=imageIcon)  # 角色图片按钮
                     imageBtn.pack(side=tk.TOP)
-                    imageBtn.bind(Event.MouseLefClick,utils.eventAdaptor(self.clickSelectRole,key=roleDir))
+                    imageBtn.bind(
+                        Event.MouseLefClick,
+                        utils.eventAdaptor(self.clickSelectRole, key=roleDir),
+                    )
                     self.addNoReferWidget(imageFrame, FrameKey.SkinContentFrame)
 
                     imageLabel = tk.Label(
@@ -227,6 +245,18 @@ class MainFrame:
     def updateSkinListPage(self):
         """更新单个角色的皮肤列表"""
         self.clearWidgetPool(FrameKey.SkinContentFrame)  # 清空角色内容页
+
+        skinListFrame = self.getBaseFrame(FrameKey.SkinContentFrame)
+        if self.selectRoleKey != None:
+            skinPath = os.path.join(
+                self.getSkinPathText(), self.selectRoleKey
+            )  # 角色皮肤路径
+            for fileDir in os.listdir(skinPath):
+                filePath = os.path.join(skinPath,fileDir)
+                if os.path.isdir(filePath):
+                    images = self.getSkinImages(filePath)
+                    for image in images:
+                        pass
         self.updateScrollFrame(FrameKey.SkinContent, FrameKey.SkinContentFrame)
 
     ####################getter&setter#####################
@@ -267,6 +297,16 @@ class MainFrame:
                 self.addRoleImage(image, key)
                 return image
         return self.getDefaultRoleImage()
+
+    def getSkinImages(self, path: str) -> list[tk.PhotoImage]:
+        """获取该文件夹下的所有皮肤图片"""
+        images = []
+        for filename in os.listdir(path):
+            if utils.isPhoto(filename):
+                filePath = path + "/" + filename
+                image = Image.open(filePath).resize(FrameConfig.roleSkinSize)
+                images.append(ImageTk.PhotoImage(image))
+        return images
 
     def getReferWidget(self, key: str) -> tk.Widget | None:
         """获取动态控件"""
@@ -401,8 +441,15 @@ class MainFrame:
             self.manager.setSkinPath(filePath)
             self.updateRoleList()
 
-    def clickSelectRole(self, event, key:str):
+    def clickSelectRole(self, event, key: str):
         """点击某一角色图标"""
+        self.selectRoleKey = key
+        displayRoleLabel = self.getReferWidget(FrameKey.RoleDisplay)  # 更新所选角色
+        if displayRoleLabel != None and isinstance(displayRoleLabel, tk.Label):
+            path = os.path.join(self.manager.getSkinPath(), key)
+            print(path)
+            image = self.getRoleImage(key, path)
+            displayRoleLabel.config(image=image)
         self.updateSkinListPage()
 
     ####################debugger########################
