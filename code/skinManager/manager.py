@@ -1,8 +1,7 @@
 import json
 import os
-import data
 import sys
-
+from data import FrameConfig
 
 class Manager:
     def __init__(self):
@@ -19,16 +18,24 @@ class Manager:
     def getModsPath(self) -> str | None:
         return self.modsPath
 
-    def setModsPath(self, modsPath:str):
+    def setModsPath(self, modsPath: str):
         self.modsPath = modsPath
 
     def loadByFile(self):
         """从文件中读取数据"""
         jsonData = None
-        file = sys.path[0] + "/" + data.FILE
+        file = os.path.join(sys.path[0], FrameConfig.dataFile)
         if os.path.exists(file):
             with open(file, encoding="utf-8") as f:
                 jsonData = json.load(f)
         if jsonData != None:
             self.skinSourcePath = jsonData["skinSourcePath"]
             self.modsPath = jsonData["modsPath"]
+
+    def writeToFile(self):
+        """将当前数据写到文件"""
+        jsonData = {"skinSourcePath": self.skinSourcePath, "modsPath": self.modsPath}
+        file = os.path.join(sys.path[0], FrameConfig.dataFile)
+        if os.path.exists(file):
+            with open(file, encoding="utf-8", mode="w") as f:
+                f.write(json.dumps(jsonData))

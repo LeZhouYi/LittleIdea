@@ -1,374 +1,651 @@
 import os
 import sys
-import tkinter as tk
 import utils
-import data
+import shutil
+import tkinter as tk
 from tkinter.filedialog import askdirectory
 from manager import Manager
 from PIL import Image, ImageTk
 from tkinter import ttk
 from threading import Thread
 from time import sleep
-import shutil
+from data import RoleKey, FrameConfig, FrameKey, Event
 
 
 class MainFrame:
     def __init__(self):
         self.manager = Manager()  # 数据
         self.mainWindow = tk.Tk()  # 主窗口
-        self.roleIconPool = {}  # 角色图示池
-        self.btnSkinPool = []  # 皮肤控件池
-        self.skinImagePool = []  # 皮肤预览图片池
-        self.nowSelectRole = None  # 当前查看的角色
 
         # 基本配置
         self.initWindow()
-        self.initBaseFrame()
-        self.initRolesFrame()
-        self.initRolesContent()
+        self.initFrameData()  # 初始化数据
+        self.initWidgetPool()  # 初始化控件池
+        self.initMainFrame()  # 初始化第一层
+        self.initSideBar()  # 初始化侧边栏
+        self.initSkinManager()  # 初始化皮肤管理页面
+        self.initRoleListPage()  # 初始化角色选择列表页面
+        self.updateRoleList()  # 更新角色列表页面
         self.mainWindow.mainloop()  # 显示窗口
 
-    ####################init############################
+    ####################init&update############################
+    # Init表示只会执行一次
+    # Update表示会清空相关页面内容并重新渲染
 
     def initWindow(self):
         """初始化窗口"""
-        self.mainWindow.title("Skin Manager")
-        self.mainWindow.attributes("-fullscreen", True)
-        self.mainWindow.bind("<Key-F4>", self.close)
-        self.mainWindow.bind("<Escape>", self.back)
+        self.mainWindow.title(FrameConfig.frameTitle)
+        self.mainWindow.attributes("-fullscreen", True)  # 全屏
+        self.mainWindow.bind(Event.F4, self.close)  # F4退出程序
+        self.mainWindow.bind(Event.Escape, self.backPage)
+        self.mainWindow.bind(Event.Tab, self.switchSideBar)  # 切换侧边栏
 
-    def initBaseFrame(self):
-        """初始化界面的大框架"""
-        self.frame0 = tk.Frame(self.mainWindow)  # 侧边栏
-        self.frame0.pack(side=tk.LEFT, fill=tk.Y, ipadx=80)
+    def initFrameData(self):
+        """初始化框架相关数据"""
+        self.sideBarSwitch = True  # 默认展开侧边栏
+        self.roleImagePool = {}  # 角色图片池
+        self.selectRoleKey = None  # 当前选择的角色
+        self.skinImagePool = []  # 角色皮肤图片池
+        self.skinThread = None #加载皮肤的线程
+        self.skinThreadStopSymbol = False #标志正在等待线程结束
+        self.page = "SkinManagePage" #当前查看页
 
-        self.margin0 = ttk.Separator(self.mainWindow, orient=tk.VERTICAL)  # 分隔线
-        self.margin0.pack(side=tk.LEFT, fill=tk.Y, ipadx=3, ipady=3)
+    def initWidgetPool(self):
+        """初始化控件池"""
+        self.widgetPool = {}
 
-        self.frame1 = tk.Frame(self.mainWindow, bg="blue")  # 标题栏
-        self.frame1.pack(side=tk.TOP, anchor=tk.NW, fill=tk.X)
+    def initMainFrame(self):
+        """初始化第一层控件"""
+        sideBarFrame = tk.Frame(self.getMainFrame(), background="yellow")  # 侧边栏
+        contentFrame = tk.Frame(self.getMainFrame(), background="green")  # 内容页
 
-        self.initContentFrame(True)
+        sideBarFrame.pack(side=tk.LEFT, fill=tk.Y, ipady=3)
+        contentFrame.pack(side=tk.LEFT, fill=tk.BOTH, expand=1)
 
-    def initContentFrame(self, isFirst: bool):
-        """isFirst为True表示初始化，False表示清空"""
-        if not isFirst and self.frame2 != None:
-            self.frame2.destroy()  # 初始化
-        self.frame2 = tk.Frame(self.mainWindow)  # 内容栏
-        self.frame2.pack(fill=tk.BOTH, expand=1)
+        self.addWidgetInPool(sideBarFrame, "sideBar")  # 缓存
+        self.addWidgetInPool(contentFrame, "content")
 
-    def initRolesFrame(self):
-        """初始化角色列表页面框架"""
-        self.margin10 = ttk.Separator(self.frame1, orient=tk.HORIZONTAL)
-        self.margin10.pack(side=tk.TOP, fill=tk.X, ipadx=3, ipady=2)
-        self.frame10 = tk.Frame(self.frame1)  # 皮肤库一行
-        self.frame10.pack(side=tk.TOP, fill=tk.X)
-        self.label100 = tk.Label(
-            self.frame10,
-            height=1,
-            text="皮肤库",
-            font=data.FONT,
-            anchor=tk.N,
-            width=3,
+    def initSideBar(self):
+        """初始化侧边栏"""
+        sideBarFrame = self.getWidgetFromPool("sideBar")  # 侧边栏框架
+
+        sideBarCanvas = tk.Canvas(sideBarFrame, background="blue")  # 侧边栏画布
+        sideBarScroll = tk.Scrollbar(
+            sideBarFrame, orient=tk.VERTICAL, width=2, background="pink"
+        )  # 侧边栏竖向滚动条
+        sideBarScrollFrame = tk.Frame(sideBarCanvas, background="pink", borderwidth=5)
+        skinManagerBtn = tk.Button(
+            sideBarScrollFrame, text="皮肤管理", font=FrameConfig.font, width=15
         )
-        self.label100.pack(side=tk.LEFT, anchor=tk.NW, ipadx=30, fill=tk.NONE)
-        self.margin100 = ttk.Separator(self.frame10, orient=tk.VERTICAL)
-        self.margin100.pack(side=tk.LEFT, fill=tk.Y, ipadx=3, ipady=3)
-        self.label101 = tk.Label(
-            self.frame10,
-            height=1,
-            text=self.getSkinPathTxt(),
-            font=data.FONT,
-            anchor=tk.W,
+
+        sideBarCanvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=1)
+        sideBarScroll.pack(side=tk.RIGHT, fill=tk.Y)
+        skinManagerBtn.pack(side=tk.TOP, fill=tk.X)
+
+        sideBarCanvas.config(
+            yscrollcommand=sideBarScroll.set, yscrollincrement=1
+        )  # 侧边栏画布关联竖直滚动条
+        sideBarScroll.config(command=sideBarCanvas.yview)  # 滚动条关联画布y轴
+        sideBarCanvas.create_window(0, 0, window=sideBarScrollFrame, anchor=tk.NW)
+        sideBarScrollFrame.bind(
+            "<MouseWheel>",
+            utils.eventAdaptor(self.scrollVerticalCanvas, widget=sideBarCanvas),
+        )  # 绑定画布的滚动事件
+
+        self.updateScrollFrame(sideBarFrame, sideBarCanvas, sideBarScrollFrame)  # 更新并配置
+
+        self.addWidgetInPool(sideBarCanvas, "sideBarCanvas")  # 缓存
+        self.addWidgetInPool(sideBarScroll, "sideBarScroll")
+        self.addWidgetInPool(sideBarScrollFrame, "sideBarFrame")
+        self.addWidgetInPool(skinManagerBtn, "sideBarBtn")
+
+    def updateScrollFrame(
+        self, parentFrame: tk.Frame, scrollCanvas: tk.Canvas, contentFrame: tk.Frame
+    ):
+        """更新滚动画布内容并重新定义"""
+        parentFrame.update()
+        scrollCanvas.config(
+            scrollregion=contentFrame.bbox(tk.ALL),
+            width=contentFrame.winfo_width(),
+            height=contentFrame.winfo_height(),
+        )  # 设定画布可滚区域及自适应内容
+
+    def initSkinManager(self):
+        """初始化皮肤管理页面"""
+        contentFrame = self.getWidgetFromPool("content")
+
+        skinTitleFrame = tk.Frame(contentFrame)  # 显示皮肤标题一栏
+        skinSourceFrame = tk.Frame(skinTitleFrame)  # 皮肤标题第一行
+        skinSourceLabel = tk.Label(skinSourceFrame, text="皮肤库", font=FrameConfig.font)
+        skinSourceSetBtn = tk.Button(skinSourceFrame, text="更新", font=FrameConfig.font)
+        skinSource = tk.Label(
+            skinSourceFrame, text=self.getSkinPathText(), font=FrameConfig.font
         )
-        self.label101.pack(side=tk.TOP, anchor=tk.NW, fill=tk.X)
-        self.label101.bind("<Button-1>", utils.eventAdaptor(self.chooseSkinPath))
 
-        self.margin11 = ttk.Separator(self.frame1, orient=tk.HORIZONTAL)
-        self.margin11.pack(side=tk.TOP, fill=tk.X, ipadx=3, ipady=3)
+        skinTitleFrame.pack(side=tk.TOP, fill=tk.X)
+        skinSourceFrame.pack(side=tk.TOP, fill=tk.X)
+        skinSourceLabel.pack(side=tk.LEFT)
+        skinSourceSetBtn.pack(side=tk.RIGHT)
+        skinSource.pack(side=tk.TOP, fill=tk.BOTH, expand=1)
 
-        self.frame11 = tk.Frame(self.frame1)  # mods一行
-        self.frame11.pack(side=tk.TOP, fill=tk.X)
-        self.lable110 = tk.Label(
-            self.frame11,
-            height=1,
-            text="Mods",
-            font=data.FONT,
-            anchor=tk.N,
-            width=3,
+        skinSourceSetBtn.bind(Event.MouseLefClick, self.clickUpdateFile)
+        skinSource.bind(Event.MouseLefClick, self.selectSkinSource)  # 选择皮肤路径事件
+
+        self.addWidgetInPool(skinTitleFrame, "skinTitle")
+        self.addWidgetInPool(skinSourceFrame, "skinTitleFrame")
+        self.addWidgetInPool(skinSourceLabel, "skinTitleLabel")
+        self.addWidgetInPool(skinSourceSetBtn, "skinSourceBtn")
+        self.addWidgetInPool(skinSource, "skinSource")
+
+        modSourceFrame = tk.Frame(skinTitleFrame)  # 皮肤标题第二行
+        modSourceLabel = tk.Label(modSourceFrame, text="Mods", font=FrameConfig.font)
+        modSourceBtn = tk.Button(modSourceFrame, text="更新", font=FrameConfig.font)
+        modSource = tk.Label(
+            modSourceFrame, text=self.getModPathText(), font=FrameConfig.font
+        )  # 3dmigoto目标路径
+
+        modSourceFrame.pack(side=tk.TOP, fill=tk.X)
+        modSourceLabel.pack(side=tk.LEFT)
+        modSourceBtn.pack(side=tk.RIGHT)
+        modSource.pack(side=tk.TOP, fill=tk.BOTH, expand=1)
+
+        modSourceBtn.bind(Event.MouseLefClick, self.clickUpdateFile)
+        modSource.bind(Event.MouseLefClick, self.selectModSource)
+
+        self.addWidgetInPool(modSourceFrame, "skinTitleFrame")
+        self.addWidgetInPool(modSourceLabel, "skinTitleLabel")
+        self.addWidgetInPool(modSourceBtn, "modSourceBtn")
+        self.addWidgetInPool(modSource, "modSource")
+
+        skinControlCanvas = tk.Canvas(contentFrame, background="yellow")  # 皮肤操作页面包管理
+        skinControlFrame = tk.Frame(skinControlCanvas, background="green")  # 显示皮肤操作一栏
+        roleSelectDisplay = tk.Label(
+            skinControlFrame,
+            image=self.getDefaultRoleImage(),
+            background="blue",
+            width=FrameConfig.skinControlWidth,
+        )  # 显示当前选择的角色图标
+        roleSelectText = tk.Label(
+            skinControlFrame,
+            text=RoleKey.getRoleText(FrameConfig.defaultRoleKey),
+            background="pink",
+            font=FrameConfig.font,
+        )  # 显示当前选择的角色文本
+        skinSelectFrame = tk.Frame(skinControlFrame)  # 已选皮肤一栏
+        skinSelectLabel = tk.Label(
+            skinSelectFrame, text="当前选择：", anchor=tk.NW, font=FrameConfig.font
+        )  # 已选皮肤标签
+        skinSelectText = tk.Label(
+            skinSelectFrame, text="", font=FrameConfig.font
+        )  # 已选皮肤文件名
+        skinReplaceBtn = tk.Button(
+            skinControlFrame, text="替换", font=FrameConfig.font
+        )  # 替换皮肤
+        skinBeSetFrame = tk.Frame(skinControlFrame)  # 当前使用的皮肤
+        skinBeSetLabel = tk.Label(
+            skinBeSetFrame, text="当前使用：", anchor=tk.NW, font=FrameConfig.font
+        )  # 已使用皮肤标签
+        skinBeSetText = tk.Label(
+            skinBeSetFrame,
+            text=self.getModsUseSkinText(FrameConfig.defaultRoleKey),
+            font=FrameConfig.font,
+        )  # 已使用皮肤文件名
+        skinUseDeleteBtn = tk.Button(
+            skinControlFrame, text="删除", font=FrameConfig.font
+        )  # 删除正在使用的皮肤
+
+        skinControlCanvas.pack(side=tk.LEFT, fill=tk.Y)
+        skinControlFrame.pack(side=tk.LEFT, fill=tk.Y)
+        roleSelectDisplay.pack(side=tk.TOP, fill=tk.X)
+        roleSelectText.pack(side=tk.TOP, fill=tk.X)
+        skinSelectFrame.pack(side=tk.TOP, fill=tk.X)
+        skinSelectLabel.pack(side=tk.TOP, fill=tk.X)
+        skinSelectText.pack(side=tk.TOP, fill=tk.X)
+        skinReplaceBtn.pack(side=tk.TOP, fill=tk.X)
+        skinBeSetFrame.pack(side=tk.TOP, fill=tk.X)
+        skinBeSetLabel.pack(side=tk.TOP, fill=tk.X)
+        skinBeSetText.pack(side=tk.TOP, fill=tk.X)
+        skinUseDeleteBtn.pack(side=tk.TOP, fill=tk.X)
+
+        skinReplaceBtn.bind(
+            Event.MouseLefClick, utils.eventAdaptor(self.clickReplaceSkin)
         )
-        self.lable110.pack(side=tk.LEFT, anchor=tk.NW, ipadx=30, fill=tk.NONE)
-        self.margin110 = ttk.Separator(self.frame11, orient=tk.VERTICAL)
-        self.margin110.pack(side=tk.LEFT, fill=tk.Y, ipadx=3, ipady=3)
-        self.label111 = tk.Label(
-            self.frame11,
-            height=1,
-            text=self.getModPathTxt(),
-            font=data.FONT,
-            anchor=tk.W,
+
+        self.addWidgetInPool(skinControlCanvas, "skinControlCanvas")
+        self.addWidgetInPool(skinControlFrame, "skinControl")
+        self.addWidgetInPool(roleSelectDisplay, "skinDisplay")
+        self.addWidgetInPool(roleSelectText, "skinDisplayText")
+        self.addWidgetInPool(skinSelectFrame, "skinDisplayFrame")
+        self.addWidgetInPool(skinSelectLabel, "skinSelectLabel")
+        self.addWidgetInPool(skinSelectText, "skinSelectText")
+        self.addWidgetInPool(skinReplaceBtn, "skinDisplayReplace")
+        self.addWidgetInPool(skinBeSetFrame, "skinDisplayFrame")
+        self.addWidgetInPool(skinBeSetLabel, "skinSelectLabel")
+        self.addWidgetInPool(skinBeSetText, "modsUseText")
+        self.addWidgetInPool(skinUseDeleteBtn, "skinDisplayBtn")
+
+        self.hideSkinControl()
+
+        roleListFrame = tk.Frame(contentFrame, background="brown")  # 显示皮肤内容一栏
+        roleListFrame.pack(side=tk.TOP, fill=tk.BOTH, expand=1)
+
+        self.addWidgetInPool(roleListFrame, "roleList")
+
+        # skinTitleFrame.pack_forget()
+        # roleListFrame.pack_forget()
+        # skinControlCanvas.forget()
+
+        # skinTitleFrame.pack(side=tk.TOP, fill=tk.X)
+        # skinControlCanvas.pack(side=tk.LEFT, fill=tk.Y)
+        # roleListFrame.pack(side=tk.TOP, fill=tk.BOTH, expand=1)
+
+    def initRoleListPage(self):
+        """初始化角色列表页面"""
+        roleListFrame = self.getWidgetFromPool("roleList")
+
+        roleListCanvas = tk.Canvas(roleListFrame, background="pink")  # 角色选择页面画布
+        roleListScrollX = tk.Scrollbar(
+            roleListFrame, orient=tk.HORIZONTAL, width=2, background="green"
+        )  # 横向滚动条
+        roleListScrollY = tk.Scrollbar(
+            roleListFrame, orient=tk.VERTICAL, width=2, background="blue"
+        )  # 竖向滚动条
+        roleListCanvas.config(
+            xscrollcommand=roleListScrollX.set,
+            xscrollincrement=1,
+            yscrollcommand=roleListScrollY.set,
+            yscrollincrement=1,
+        )  # 画布关联滚动条
+        roleListScrollX.config(command=roleListCanvas.xview)  # 滚动条关联画布
+        roleListScrollY.config(command=roleListCanvas.yview)
+        roleListScrollX.pack(side=tk.BOTTOM, fill=tk.X)
+        roleListScrollY.pack(side=tk.RIGHT, fill=tk.Y)
+        roleListCanvas.pack(side=tk.TOP, fill=tk.BOTH, expand=1)
+
+        roleListContentFrame = tk.Frame(
+            roleListCanvas, background="white", borderwidth=5
         )
-        self.label111.pack(side=tk.TOP, anchor=tk.NW, fill=tk.X)
-        self.label111.bind("<Button-1>", utils.eventAdaptor(self.chooseModsPath))
-
-        self.margin12 = ttk.Separator(self.frame1, orient=tk.HORIZONTAL)
-        self.margin12.pack(side=tk.TOP, fill=tk.X, ipadx=3, ipady=3)
-
-    def initRolesContent(self):
-        """初始化角色选择内容页"""
-        self.clearContent()
-        skinPath = self.manager.getSkinPath()
-        if skinPath == None or not os.path.exists(skinPath):
-            return
-        for dirpath, dirnames, filenames in os.walk(skinPath):
-            count = 0
-            for dirname in dirnames:
-                if data.existRole(dirname):
-                    self.addSkinIconBtn(dirname, count)
-                    count += 1
-
-    def initRoleSkinFrame(self, key: str):
-        """初始化单个角色皮肤选择界面"""
-        self.clearContent()
-        self.frame20 = tk.Frame(self.getContentFrame())  # 皮肤选择页面左侧栏
-        self.frame20.pack(side=tk.LEFT, fill=tk.Y)
-        roleIcon = self.getIconImage(key)  # 添加ICON
-        if roleIcon != None:
-            btn200 = tk.Label(self.frame20, image=roleIcon)
-            btn200.pack(side=tk.TOP, anchor=tk.NW, ipadx=80)
-            self.addBtnPool(btn200)
-
-        margin20 = ttk.Separator(self.getContentFrame(), orient=tk.VERTICAL)
-        margin20.pack(fill=tk.Y, side=tk.LEFT, ipadx=3)
-        self.addBtnPool(margin20)
-
-        self.frame21 = tk.Frame(self.getContentFrame())  # 皮肤列选择栏
-        self.frame21.pack(side=tk.LEFT, fill=tk.BOTH, expand=1)
-        self.initSkinLines(key)
-
-        margin201 = ttk.Separator(self.frame20, orient=tk.HORIZONTAL)
-        margin201.pack(fill=tk.X, side=tk.TOP, ipady=1)
-        self.addBtnPool(margin201)
-
-        self.label200 = tk.Label(
-            self.frame20, text="已选择皮肤:", height=1, font=data.FONT, anchor=tk.W
+        roleListCanvas.create_window(0, 0, window=roleListContentFrame, anchor=tk.NW)
+        roleListCanvas.bind(
+            Event.MouseWheel,
+            utils.eventAdaptor(self.scrollVerticalCanvas, widget=roleListCanvas),
         )
-        self.label201 = tk.Label(self.frame20, text="empty", height=1, font=data.FONT)
-        self.label200.pack(side=tk.TOP, fill=tk.X)
-        self.label201.pack(side=tk.TOP, fill=tk.X)
-        margin202 = ttk.Separator(self.frame20, orient=tk.HORIZONTAL)
-        margin202.pack(fill=tk.X, side=tk.TOP, ipady=1)
-        self.addBtnPool(margin202)
 
-        self.btn200 = tk.Button(self.frame20, text="替换", font=data.FONT)
-        self.btn200.pack(side=tk.TOP, fill=tk.X)
-        self.btn200.bind("<Button-1>", utils.eventAdaptor(self.clickReplaceSkin))
+        self.updateScrollFrame(roleListFrame, roleListCanvas, roleListContentFrame)
 
-    def initSkinLines(self, key: str):
-        """初始化该角色的所有皮肤的预览页面"""
-        if self.frame21 != None:
-            skinPath = self.getRoleFilePath(key)  # 获取角色文件夹
-            for dirTemp in os.listdir(skinPath):  # 获取所有文件名
-                pathTemp = os.path.join(skinPath, dirTemp)  # 构造完整 路径
-                if os.path.isdir(pathTemp):  # 判断是否是路径
-                    images = self.getSkinImages(pathTemp)  # 加载该路径所有图片
-                    for image in images:
-                        self.addSkinImageBtn(dirTemp, image)
+        self.addWidgetInPool(roleListCanvas, "roleListCanvas")
+        self.addWidgetInPool(roleListScrollX, "roleListScroll")
+        self.addWidgetInPool(roleListScrollY, "roleListScroll")
+        self.addWidgetInPool(roleListContentFrame, "roleListContent")
 
-    def addSkinImageBtn(self, dirname: str, image: tk.PhotoImage):
-        """将图片及文件名制作成相框添加"""
-        frame21x = tk.Frame(self.frame21)  # 单个图片做一个分组
-        btn21xx = tk.Button(frame21x, image=image)
-        label21xx = tk.Label(frame21x, text=dirname, height=1)
+    def updateRoleList(self):
+        """更新角色列表控件"""
+        self.cleaerSkinContent()
+        roleListCanvas = self.getWidgetFromPool("roleListCanvas")
+        roleContentFrame = tk.Frame(roleListCanvas, background="white", borderwidth=5)
+        roleListCanvas.create_window(0, 0, window=roleContentFrame, anchor=tk.NW)
+        self.addWidgetInPool(roleContentFrame, "roleListContent")
 
-        btn21xx.bind("<Button-1>", utils.eventAdaptor(self.chooseSkin, dirname=dirname))
+        skinSourcePath = self.manager.getSkinPath()  # 皮肤库路径
+        if skinSourcePath != None and os.path.exists(skinSourcePath):
+            roleIndex = 0
+            for roleDir in os.listdir(skinSourcePath):
+                rolePath = os.path.join(skinSourcePath, roleDir)
+                if os.path.isdir(rolePath) and RoleKey.existRole(roleDir):
+                    imageIcon = self.getRoleImage(roleDir, rolePath)
+                    rowIndex = (roleIndex // 10) + 1
+                    columnIndex = (roleIndex % 10) + 1
+                    imageFrame = tk.Frame(roleContentFrame)  # 单个角色框架
+                    imageFrame.grid(row=rowIndex, column=columnIndex)
+                    imageBtn = tk.Button(imageFrame, image=imageIcon)  # 角色图片按钮
+                    imageBtn.pack(side=tk.TOP)
+                    imageBtn.bind(
+                        Event.MouseLefClick,
+                        utils.eventAdaptor(self.clickSelectRole, key=roleDir),
+                    )
+                    imageLabel = tk.Label(
+                        imageFrame,
+                        text=RoleKey.getRoleText(roleDir),
+                        font=FrameConfig.font,
+                    )  # 角色名
+                    imageLabel.pack(side=tk.TOP)
+                    self.addWidgetInPool(imageFrame, "singleRole")
+                    self.addWidgetInPool(imageBtn, "singleRole")
+                    self.addWidgetInPool(imageLabel, "singleRole")
+                    roleIndex += 1
 
-        frame21x.pack(side=tk.LEFT, anchor=tk.NW)
-        btn21xx.pack(side=tk.TOP, anchor=tk.NW)
-        label21xx.pack(side=tk.TOP)
+        roleListFrame = self.getWidgetFromPool("roleList")
+        self.updateScrollFrame(roleListFrame, roleListCanvas, roleContentFrame)
 
-        self.addBtnPools(label21xx, btn21xx, frame21x)
+    def displaySkinControl(self):
+        """显示皮肤管理页面"""
+        skinTitleFrame = self.getWidgetFromPool("skinTitle")
+        roleListFrame = self.getWidgetFromPool("roleList")
+        skinControlCanvas = self.getWidgetFromPool("skinControlCanvas")
+
+        skinTitleFrame.pack_forget()
+        roleListFrame.pack_forget()
+        skinControlCanvas.forget()
+
+        skinTitleFrame.pack(side=tk.TOP, fill=tk.X)
+        skinControlCanvas.pack(side=tk.LEFT, fill=tk.Y)
+        roleListFrame.pack(side=tk.TOP, fill=tk.BOTH, expand=1)
+
+    def hideSkinControl(self):
+        """隐藏皮肤管理页面"""
+        controlCanvas = self.getWidgetFromPool("skinControlCanvas")
+        controlCanvas.forget()
+
+    def updateSkinListPage(self):
+        """更新单个角色的皮肤列表"""
+        self.cleaerSkinContent()  # 清空角色内容页
+        self.skinThread = Thread(target=self.updateSkinListThread, daemon=True)
+        self.skinThread.start()
+
+    def updateSkinListThread(self):
+        """线程更新单个角色的皮肤"""
+        roleListCanvas = self.getWidgetFromPool("roleListCanvas")
+        roleContentFrame = tk.Frame(roleListCanvas, background="white", borderwidth=5)
+        roleListCanvas.create_window(0, 0, window=roleContentFrame, anchor=tk.NW)
+        self.addWidgetInPool(roleContentFrame, "roleListContent")
+        if self.selectRoleKey != None:
+            skinPath = os.path.join(
+                self.getSkinPathText(), self.selectRoleKey
+            )  # 角色皮肤路径
+            indexCount = 0
+            for fileDir in os.listdir(skinPath):
+                filePath = os.path.join(skinPath, fileDir)
+                if not os.path.isdir(filePath):
+                    continue
+                images = self.getSkinImages(filePath)
+                for image in images:
+                    rowIndex = indexCount % 2
+                    columnIndex = indexCount // 2
+                    skinImageFrame = tk.Frame(roleContentFrame)
+                    skinImageFrame.grid(row=rowIndex, column=columnIndex)
+                    skinImageBtn = tk.Button(skinImageFrame, image=image)
+                    skinImageBtn.pack(side=tk.TOP)
+                    skinImageLabel = tk.Label(
+                        skinImageFrame, text=fileDir, font=FrameConfig.font
+                    )
+                    skinImageLabel.pack(side=tk.TOP, fill=tk.X)
+                    skinImageBtn.bind(
+                        Event.MouseLefClick,
+                        utils.eventAdaptor(self.clickSelectSkin, dirName=fileDir),
+                    )
+                    self.addSkinImage(image)
+
+                    self.addWidgetInPool(skinImageFrame, "skinList")
+                    self.addWidgetInPool(skinImageFrame, "skinList")
+                    self.addWidgetInPool(skinImageFrame, "skinList")
+
+                    indexCount += 1
+
+        roleListFrame = self.getWidgetFromPool("roleList")
+        self.updateScrollFrame(roleListFrame, roleListCanvas, roleContentFrame)
+
+    ####################getter&setter#####################
+
+    def getMainFrame(self) -> tk.Tk:
+        """主窗口"""
+        return self.mainWindow
+
+    def getSkinPathText(self) -> str:
+        """获取皮肤路径"""
+        path = self.manager.getSkinPath()
+        return path if path != None else "请选择皮肤库路径"
+
+    def getModPathText(self) -> str:
+        """获取mods文件夹路径"""
+        path = self.manager.getModsPath()
+        return path if path != None else "请选择3Dmigoto Mods路径"
+
+    def getRoleImage(self, key: str, path: str) -> tk.PhotoImage:
+        """获取该文件夹下的第一张图片作为角色图片"""
+        if key in self.roleImagePool:
+            return self.roleImagePool[key]
+        for fileName in os.listdir(path):
+            filePath = os.path.join(path, fileName)
+            if os.path.isfile(filePath) and utils.isPhoto(filePath):
+                image = Image.open(filePath).resize(FrameConfig.roleIconSize)
+                image = ImageTk.PhotoImage(image)
+                self.addRoleImage(image, key)
+                return image
+        return self.getDefaultRoleImage()
+
+    def getSkinImages(self, path: str) -> list[tk.PhotoImage]:
+        """获取该文件夹下的所有皮肤图片"""
+        images = []
+        for filename in os.listdir(path):
+            if utils.isPhoto(filename):
+                filePath = os.path.join(path, filename)
+                image = Image.open(filePath).resize(FrameConfig.roleSkinSize)
+                images.append(ImageTk.PhotoImage(image))
+        return images
+
+    def getModsUseSkinText(self, key: str) -> str:
+        """获取当前角色正在使用的皮肤文本"""
+        modPath = self.manager.getModsPath()
+        if modPath != None and os.path.exists(modPath):
+            rolePath = os.path.join(modPath, key)
+            if os.path.exists(rolePath):
+                for fileDir in os.listdir(rolePath):
+                    skinPath = os.path.join(rolePath, fileDir)
+                    if os.path.isdir(skinPath):
+                        return fileDir
+        return ""
+
+    def getWidgetFromPool(self, key: str) -> tk.Widget:
+        """默认返回key对应的第一个控件"""
+        widgets = self.widgetPool[key]
+        return widgets[0]
+
+    def getDefaultRoleImage(self) -> tk.PhotoImage:
+        """获取默认的角色图片"""
+        if FrameConfig.defaultRoleKey not in self.roleImagePool:
+            path = os.path.join(sys.path[0], FrameConfig.defaultRole)
+            image = Image.open(path).resize(FrameConfig.roleIconSize)
+            image = ImageTk.PhotoImage(image)
+            self.addRoleImage(image, FrameConfig.defaultRoleKey)
+        return self.roleImagePool[FrameConfig.defaultRoleKey]
+
+    # #####################Add&Modify&Delete##############
+
+    def addWidgetInPool(self, widget: tk.Widget, key: str):
+        """缓存控件"""
+        if key not in self.widgetPool:
+            self.widgetPool[key] = []
+        self.widgetPool[key].append(widget)
+
+    def addRoleImage(self, image: tk.PhotoImage, key: str):
+        """缓存角色图片"""
+        self.roleImagePool[key] = image
+
+    def addSkinImage(self, image: tk.PhotoImage):
+        """缓存皮肤图片"""
         self.skinImagePool.append(image)
 
-    def addSkinIconBtn(self, key: str, index: int):
-        """添加皮肤按钮"""
-        image = self.getIconImage(key)
-        if image != None:
-            rowIndex = (int)(index / 9) + 1
-            columnIndex = (int)(index % 9 * 2) + 1
+    def clearWidgetByList(self, keys: list[str]):
+        """通过Key列表清空控件池"""
+        for key in keys:
+            self.clearWidgetByKey(key)
 
-            btn2x = tk.Button(self.getContentFrame(), image=image)
-            btn2x.grid(row=rowIndex, column=columnIndex, pady=5)
-            btn2x.bind(
-                "<Button-1>", utils.eventAdaptor(self.clickInputRoleSkins, key=key)
-            )
-            self.addBtnPool(btn2x)
-            label2x = ttk.Label(self.getContentFrame(), width=3)
-            label2x.grid(row=rowIndex, column=columnIndex + 1)
-            self.addBtnPool(label2x)
+    def clearWidgetByKey(self, key: str):
+        """通过Key清空控件池"""
+        if key in self.widgetPool:
+            for widget in self.widgetPool[key]:
+                if isinstance(widget, tk.Widget):
+                    widget.destroy()
+
+    def cleaerSkinContent(self):
+        """清空roleList,skinList页面内的控件"""
+        self.clearWidgetByKey("singleRole")
+        self.clearWidgetByKey("roleListContent")
 
     ####################event###########################
 
     def close(self, event):
         """关闭事件"""
+        self.getMainFrame().destroy()
         sys.exit()
 
-    def back(self, event):
-        """返回上一页"""
-        if self.nowSelectRole == None:
-            return
-        elif self.nowSelectRole != None:
-            self.nowSelectRole = None
-            self.clearContent()
-            self.initRolesContent()
-            self.skinImagePool = []
+    def scrollHoriCanvas(self, event, widget: tk.Canvas):
+        """画布左右滚动事件"""
+        widget.xview_scroll(-1 * (event.delta // 5), tk.UNITS)
 
-    def clickInputRoleSkins(self, event, key: str):
-        """点击进入单个角色皮肤选择页面"""
-        self.nowSelectRole = key
-        self.initRoleSkinFrame(key)
+    def scrollVerticalCanvas(self, event, widget: tk.Canvas):
+        """画布上下滚动事件"""
+        widget.yview_scroll(-1 * (event.delta // 5), tk.UNITS)
 
-    def chooseSkinPath(self, event):
-        """选择皮肤路径"""
+    def switchSideBar(self, event):
+        """展开、关闭侧边栏"""
+        sideBarCanvas = self.getWidgetFromPool("sideBarCanvas")
+        if sideBarCanvas != None:
+            if self.sideBarSwitch:
+                sideBarCanvas.pack_forget()
+            else:
+                sideBarFrame = self.getWidgetFromPool("sideBar")
+                sideBarContentFrame = self.getWidgetFromPool("sideBarFrame")
+                sideBarCanvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=1)
+                self.updateScrollFrame(sideBarFrame, sideBarCanvas, sideBarContentFrame)
+            self.sideBarSwitch = not self.sideBarSwitch
+
+    def selectSkinSource(self, event):
+        """选择皮肤库路径"""
         filePath = askdirectory()
-        if not utils.isEmpty(filePath):
-            self.label101.config(text=filePath)
+        skinSouce = self.getWidgetFromPool("skinSource")
+        if (
+            not utils.isEmpty(filePath)
+            and skinSouce != None
+            and isinstance(skinSouce, tk.Label)
+        ):
+            skinSouce.config(text=filePath)
             self.manager.setSkinPath(filePath)
-            self.initRolesContent()
+            self.updateRoleList()
 
-    def chooseModsPath(self, evnent):
-        """选择3dmigoto mods 文件夹"""
+    def selectModSource(self, event):
+        """选择Mods路径"""
         filePath = askdirectory()
-        if not utils.isEmpty(filePath):
-            self.label111.config(text=filePath)
+        modSource = self.getWidgetFromPool("modSource")
+        if (
+            not utils.isEmpty(filePath)
+            and modSource != None
+            and isinstance(modSource, tk.Label)
+        ):
+            modSource.config(text=filePath)
             self.manager.setModsPath(filePath)
 
-    def chooseSkin(self, event, dirname: str):
-        """选择皮肤"""
-        if self.label201 != None:
-            self.label201.config(text=dirname)
+    def clickSelectRole(self, event, key: str):
+        """点击某一角色图标"""
+        self.selectRoleKey = key
+        displayRoleLabel = self.getWidgetFromPool("skinDisplay")  # 更新所选角色
+        if displayRoleLabel != None and isinstance(displayRoleLabel, tk.Label):
+            path = os.path.join(self.manager.getSkinPath(), key)
+            image = self.getRoleImage(key, path)
+            displayRoleLabel.config(image=image)
+        displayRoleText = self.getWidgetFromPool("skinDisplayText")  # 更新所选角色信息
+        if displayRoleText != None and isinstance(displayRoleText, tk.Label):
+            displayRoleText.config(text=RoleKey.getRoleText(self.selectRoleKey))
+        skinSelectText = self.getWidgetFromPool("skinSelectText")  # 清空原选择的信息
+        if skinSelectText != None and isinstance(skinSelectText, tk.Label):
+            skinSelectText.config(text="")
+        modUseRoleText = self.getWidgetFromPool("modsUseText")  # mods正在使用角色
+        if modUseRoleText != None and isinstance(modUseRoleText, tk.Label):
+            modUseRoleText.config(text=self.getModsUseSkinText(self.selectRoleKey))
+        self.displaySkinControl()
+        self.updateSkinListPage()
+
+    def clickSelectSkin(self, event, dirName: str):
+        """点击选择皮肤"""
+        skinSelectLabel = self.getWidgetFromPool("skinSelectText")
+        if isinstance(skinSelectLabel, tk.Label):
+            skinSelectLabel.config(text=dirName)
+
+    def clickUpdateFile(self, event):
+        """点击更新到文件"""
+        self.manager.writeToFile()
+
+    def backPage(self, event):
+        """返回上一页"""
+        if not utils.isEmpty(self.selectRoleKey) and not self.skinThreadStopSymbol:
+            utils.stopThread(self.skinThread)#终止线程
+
+            self.selectRoleKey = ""
+            skinSelectText = self.getWidgetFromPool("skinSelectText")  # 清空原选择的信息
+            if skinSelectText != None and isinstance(skinSelectText, tk.Label):
+                skinSelectText.config(text="")
+            modUseRoleText = self.getWidgetFromPool("modsUseText")  # mods正在使用角色
+            if modUseRoleText != None and isinstance(modUseRoleText, tk.Label):
+                modUseRoleText.config(text="")
+            self.cleaerSkinContent()
+            self.hideSkinControl()
+            self.updateRoleList()
 
     def clickReplaceSkin(self, event):
-        """点击替换皮肤事件"""
-        if self.btn200 != None and self.btn200["text"] == "替换":
-            pathName = self.label201["text"]
-            if utils.isEmpty(pathName) or pathName == "empty":
-                self.btn200.config(text="替换(未选择皮肤)", fg="red")
+        """点击替换皮肤"""
+        replaceBtn = self.getWidgetFromPool("skinDisplayReplace")
+        replaceText = self.getWidgetFromPool("skinSelectText")
+        if (
+            replaceBtn == None
+            or not isinstance(replaceBtn, tk.Button)
+            or replaceText == None
+            or not isinstance(replaceText, tk.Label)
+        ):
+            return
+        if replaceBtn != None and replaceBtn["text"] == "替换":
+            pathName = replaceText["text"]
+            if utils.isEmpty(pathName):
+                replaceBtn.config(text="替换(未选择皮肤)", fg=FrameConfig.colorFail)
                 Thread(
-                    target=self.replaceText, args=(self.btn200, "替换"), daemon=True
+                    target=self.replaceText, args=(replaceBtn, "替换"), daemon=True
                 ).start()
                 return
-            modsPath = self.label111["text"]
+            modsPath = self.manager.getModsPath()
             if utils.isEmpty(modsPath) or modsPath == "请选择3dmigoto Mods文件夹":
-                self.btn200.config(text="替换(未选择Mods文件夹)", fg="red")
+                replaceBtn.config(text="替换(未选择Mods文件夹)", fg=FrameConfig.colorFail)
                 Thread(
-                    target=self.replaceText, args=(self.btn200, "替换"), daemon=True
+                    target=self.replaceText, args=(replaceBtn, "替换"), daemon=True
                 ).start()
                 return
             if not os.path.exists(modsPath):
-                self.btn200.config(text="替换(Mods文件夹不存在)", fg="red")
+                replaceBtn.config(text="替换(Mods文件夹不存在)", fg=FrameConfig.colorFail)
                 Thread(
-                    target=self.replaceText, args=(self.btn200, "替换"), daemon=True
+                    target=self.replaceText, args=(replaceBtn, "替换"), daemon=True
                 ).start()
                 return
-            self.btn200.config(text="替换中......")
+            replaceBtn.config(text="替换中......")
             Thread(
                 target=self.replaceSkin, args=(modsPath, pathName), daemon=False
             ).start()
 
     def replaceSkin(self, modsPath: str, pathName: str) -> bool:
         """替换皮肤"""
-        rolePath = modsPath + "/" + self.nowSelectRole
-        if os.path.exists(rolePath):
-            shutil.rmtree(rolePath)
-        skinPath = self.getRoleFilePath(self.nowSelectRole) + "/" + pathName
-        if os.path.exists(skinPath):
-            print(skinPath)
-            print(rolePath)
-            shutil.copytree(skinPath, rolePath)
-            self.btn200.config(text="替换成功！！", fg="cyan")
+        modRolePath = os.path.join(modsPath, self.selectRoleKey)  # mods角色路径
+        if os.path.exists(modRolePath):
+            shutil.rmtree(modRolePath)  # 清空当前角色正当使用的mod
+        modFileDir = os.path.join(modRolePath,pathName) #创建目标文件夹
+        rolePath = os.path.join(self.manager.getSkinPath(), self.selectRoleKey)
+        skinPath = os.path.join(rolePath, pathName)
+        replaceBtn = self.getWidgetFromPool("skinDisplayReplace")
+        if isinstance(replaceBtn, tk.Button) and os.path.exists(skinPath):
+            shutil.copytree(skinPath, modFileDir)
+            replaceBtn.config(text="替换成功！！", fg=FrameConfig.colorSuccess)
             Thread(
-                target=self.replaceText, args=(self.btn200, "替换"), daemon=True
+                target=self.replaceText, args=(replaceBtn, "替换"), daemon=True
             ).start()
+            modUseRoleText = self.getWidgetFromPool("modsUseText")  # mods正在使用角色
+            if modUseRoleText != None and isinstance(modUseRoleText, tk.Label):
+                modUseRoleText.config(text=self.getModsUseSkinText(self.selectRoleKey))
         else:
-            self.btn200.config(text="替换失败(未知原因)", fg="red")
+            replaceBtn.config(text="替换失败(未知原因)", fg=FrameConfig.colorFail)
             Thread(
-                target=self.replaceText, args=(self.btn200, "替换"), daemon=True
+                target=self.replaceText, args=(replaceBtn, "替换"), daemon=True
             ).start()
 
     def replaceText(self, btn: tk.Button, text: str):
         """替换按钮文本"""
         sleep(3)
-        btn.config(text=text, fg="black")
-
-    ####################getter&setter#####################
-    def getSkinImages(self, path: str) -> list[tk.PhotoImage]:
-        """获取该文件夹下所有图片"""
-        images = []
-        for filename in os.listdir(path):
-            if utils.isPhoto(filename):
-                filePath = os.path.join(path, filename)
-                image = Image.open(filePath).resize((230, 450))
-                images.append(ImageTk.PhotoImage(image))
-        return images
-
-    def getIconImage(self, key: str) -> tk.PhotoImage | None:
-        """根据key获取对应角色的icon"""
-        skinPath = self.getRoleFilePath(key)
-        if key not in self.roleIconPool:
-            for filename in os.listdir(skinPath):
-                if utils.isPhoto(filename):
-                    self.addRoleImage(key, skinPath + "/" + filename)
-                    return self.roleIconPool[key]
-        else:
-            return self.roleIconPool[key]
-        return None
-
-    def getRoleFilePath(self, key: str):
-        """获取角色图标路径"""
-        return self.manager.getSkinPath() + "/" + key
-
-    def getSkinPathTxt(self) -> str:
-        """获取皮肤路径相关文本"""
-        filePathTxt = self.manager.getSkinPath()
-        if filePathTxt == None:
-            filePathTxt = "请选择皮肤文件夹"
-        return filePathTxt
-
-    def getModPathTxt(self) -> str:
-        """获取mods路径相关文本"""
-        filePathTxt = self.manager.getModsPath()
-        if filePathTxt == None:
-            filePathTxt = "请选择3dmigoto Mods文件夹"
-        return filePathTxt
-
-    def getContentFrame(self) -> tk.Frame:
-        """内容框"""
-        return self.frame2
-
-    def getTitleFrame(self) -> tk.Frame:
-        """标题框"""
-        return self.frame1
-
-    ###################Modify&Delete&Add########################
-    def addBtnPool(self, widget: tk.Widget):
-        """把控件添加进临时缓存池"""
-        self.btnSkinPool.append(widget)
-
-    def addBtnPools(self, *args: tk.Widget):
-        """把控件添加进临时缓存池"""
-        for widget in args:
-            self.btnSkinPool.append(widget)
-
-    def clearContent(self):
-        """清空Content的内容"""
-        self.initContentFrame(False)
-        self.btnSkinPool = []
-
-    def addRoleImage(self, key: str, filePath: str):
-        """添加角色的图片进缓存池"""
-        if key not in self.roleIconPool:
-            image = Image.open(filePath).resize((120, 160))
-            self.roleIconPool[key] = ImageTk.PhotoImage(image)
+        btn.config(text=text, fg=FrameConfig.colorDefault)
 
 
 if __name__ == "__main__":
