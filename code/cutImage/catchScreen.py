@@ -15,6 +15,7 @@ class CatchScreen:
         print("start catch screen")
         path = sys.path[0]
         sourcePath = os.path.join(path,"sources")
+        createDir(sourcePath)
         fileName = "%d.png"%datetime.datetime.now().timestamp()
         filePath = os.path.join(sourcePath,fileName)
         generater = mss().save(mon=2,output=filePath)

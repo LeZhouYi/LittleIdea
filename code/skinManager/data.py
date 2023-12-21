@@ -65,6 +65,7 @@ class FrameConfig:
     skinControlWidth = 220  # 皮肤操作界面宽度
 
     defaultRole = "src/default_role.jpeg"  # 默认角色图片路径
+    defaultSkin = "src/default_skin.png" #默认皮肤图片路径
     defaultRoleKey = "defalut"  # 默认角色Key
 
 
@@ -93,8 +94,9 @@ class FrameKey:
         "skinDisplayLabel",
         "skinSelectText",
         "skinDisplayReplace"
-        "skinDisplayBtn",
+        "skinDisplayDelete",
         "modsUseText",
+        "catchScreen"
     ]
     roleListKeys = ["roleListCanvas", "roleListScroll", "roleListContent", "singleRole"]
     skinListKeys = ["skinList"]

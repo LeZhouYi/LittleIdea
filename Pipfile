@@ -4,6 +4,9 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
+mss = "*"
+pynput = "*"
+pillow = "*"
 
 [dev-packages]
 

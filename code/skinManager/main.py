@@ -9,7 +9,7 @@ from PIL import Image, ImageTk
 from tkinter import ttk
 from threading import Thread
 from time import sleep
-from data import RoleKey, FrameConfig, FrameKey, Event
+from data import RoleKey, FrameConfig, Event
 
 
 class MainFrame:
@@ -23,7 +23,7 @@ class MainFrame:
         self.initWidgetPool()  # 初始化控件池
         self.initMainFrame()  # 初始化第一层
         self.initSideBar()  # 初始化侧边栏
-        self.switchSideBar(None)#隐藏侧边栏
+        self.switchSideBar(None)  # 隐藏侧边栏
         self.initSkinManager()  # 初始化皮肤管理页面
         self.initRoleListPage()  # 初始化角色选择列表页面
         self.updateRoleList()  # 更新角色列表页面
@@ -49,7 +49,7 @@ class MainFrame:
         self.skinImagePool = []  # 角色皮肤图片池
         self.skinThread = None  # 加载皮肤的线程
         self.skinThreadStopSymbol = False  # 标志正在等待线程结束
-        self.page = "SkinManagePage"  # 当前查看页
+        self.page = "RoleListPage"  # 当前查看页
 
     def initWidgetPool(self):
         """初始化控件池"""
@@ -129,7 +129,10 @@ class MainFrame:
         skinSourceSetBtn.pack(side=tk.RIGHT)
         skinSource.pack(side=tk.TOP, fill=tk.BOTH, expand=1)
 
-        skinSourceSetBtn.bind(Event.MouseLefClick, self.clickUpdateFile)
+        skinSourceSetBtn.bind(
+            Event.MouseLefClick,
+            utils.eventAdaptor(self.clickUpdateFile, btn=skinSourceSetBtn),
+        )
         skinSource.bind(Event.MouseLefClick, self.selectSkinSource)  # 选择皮肤路径事件
 
         self.addWidgetInPool(skinTitleFrame, "skinTitle")
@@ -150,7 +153,10 @@ class MainFrame:
         modSourceBtn.pack(side=tk.RIGHT)
         modSource.pack(side=tk.TOP, fill=tk.BOTH, expand=1)
 
-        modSourceBtn.bind(Event.MouseLefClick, self.clickUpdateFile)
+        modSourceBtn.bind(
+            Event.MouseLefClick,
+            utils.eventAdaptor(self.clickUpdateFile, btn=modSourceBtn),
+        )
         modSource.bind(Event.MouseLefClick, self.selectModSource)
 
         self.addWidgetInPool(modSourceFrame, "skinTitleFrame")
@@ -194,6 +200,9 @@ class MainFrame:
         skinUseDeleteBtn = tk.Button(
             skinControlFrame, text="删除", font=FrameConfig.font
         )  # 删除正在使用的皮肤
+        catchScreenBtn = tk.Button(
+            skinControlFrame, text="截图制作预览", font=FrameConfig.font
+        )  # 截图并作为皮肤预览图
 
         skinControlCanvas.pack(side=tk.LEFT, fill=tk.Y)
         skinControlFrame.pack(side=tk.LEFT, fill=tk.Y)
@@ -203,6 +212,7 @@ class MainFrame:
         skinSelectLabel.pack(side=tk.TOP, fill=tk.X)
         skinSelectText.pack(side=tk.TOP, fill=tk.X)
         skinReplaceBtn.pack(side=tk.TOP, fill=tk.X)
+        catchScreenBtn.pack(side=tk.TOP, fill=tk.X)
         skinBeSetFrame.pack(side=tk.TOP, fill=tk.X)
         skinBeSetLabel.pack(side=tk.TOP, fill=tk.X)
         skinBeSetText.pack(side=tk.TOP, fill=tk.X)
@@ -211,6 +221,7 @@ class MainFrame:
         skinReplaceBtn.bind(
             Event.MouseLefClick, utils.eventAdaptor(self.clickReplaceSkin)
         )
+        skinUseDeleteBtn.bind(Event.MouseLefClick, self.clickDeleteModSkin)
 
         self.addWidgetInPool(skinControlCanvas, "skinControlCanvas")
         self.addWidgetInPool(skinControlFrame, "skinControl")
@@ -223,7 +234,8 @@ class MainFrame:
         self.addWidgetInPool(skinBeSetFrame, "skinDisplayFrame")
         self.addWidgetInPool(skinBeSetLabel, "skinSelectLabel")
         self.addWidgetInPool(skinBeSetText, "modsUseText")
-        self.addWidgetInPool(skinUseDeleteBtn, "skinDisplayBtn")
+        self.addWidgetInPool(skinUseDeleteBtn, "skinDisplayDelete")
+        self.addWidgetInPool(catchScreenBtn,"catchScreen")
 
         self.hideSkinControl()
 
@@ -312,22 +324,22 @@ class MainFrame:
 
     def displaySkinControl(self):
         """显示皮肤管理页面"""
-        skinTitleFrame = self.getWidgetFromPool("skinTitle")
-        roleListFrame = self.getWidgetFromPool("roleList")
-        skinControlCanvas = self.getWidgetFromPool("skinControlCanvas")
+        # skinTitleFrame = self.getWidgetFromPool("skinTitle")
+        # roleListFrame = self.getWidgetFromPool("roleList")
+        # skinControlCanvas = self.getWidgetFromPool("skinControlCanvas")
 
-        skinTitleFrame.pack_forget()
-        roleListFrame.pack_forget()
-        skinControlCanvas.forget()
+        # skinTitleFrame.pack_forget()
+        # roleListFrame.pack_forget()
+        # skinControlCanvas.forget()
 
-        skinTitleFrame.pack(side=tk.TOP, fill=tk.X)
-        skinControlCanvas.pack(side=tk.LEFT, fill=tk.Y)
-        roleListFrame.pack(side=tk.TOP, fill=tk.BOTH, expand=1)
+        # skinTitleFrame.pack(side=tk.TOP, fill=tk.X)
+        # skinControlCanvas.pack(side=tk.LEFT, fill=tk.Y)
+        # roleListFrame.pack(side=tk.TOP, fill=tk.BOTH, expand=1)
 
     def hideSkinControl(self):
         """隐藏皮肤管理页面"""
-        controlCanvas = self.getWidgetFromPool("skinControlCanvas")
-        controlCanvas.forget()
+        # controlCanvas = self.getWidgetFromPool("skinControlCanvas")
+        # controlCanvas.forget()
 
     def updateSkinListPage(self):
         """更新单个角色的皮肤列表"""
@@ -414,7 +426,15 @@ class MainFrame:
                 filePath = os.path.join(path, filename)
                 image = Image.open(filePath).resize(FrameConfig.roleSkinSize)
                 images.append(ImageTk.PhotoImage(image))
+        if len(images) <= 0:
+            images.append(self.getDefaultSkinImage())
         return images
+
+    def getDefaultSkinImage(self) -> tk.PhotoImage:
+        """获取默认皮肤图片"""
+        filePath = os.path.join(sys.path[0], FrameConfig.defaultSkin)
+        image = Image.open(filePath).resize(FrameConfig.roleSkinSize)
+        return ImageTk.PhotoImage(image)
 
     def getModsUseSkinText(self, key: str) -> str:
         """获取当前角色正在使用的皮肤文本"""
@@ -467,13 +487,14 @@ class MainFrame:
         """通过Key清空控件池"""
         if key in self.widgetPool:
             for widget in self.widgetPool[key]:
-                if isinstance(widget, tk.Widget):
+                if self.isWidget(widget, tk.Widget):
                     widget.destroy()
 
     def cleaerSkinContent(self):
         """清空roleList,skinList页面内的控件"""
         self.clearWidgetByKey("singleRole")
         self.clearWidgetByKey("roleListContent")
+        self.skinImagePool = []
 
     ####################event###########################
 
@@ -507,11 +528,7 @@ class MainFrame:
         """选择皮肤库路径"""
         filePath = askdirectory()
         skinSouce = self.getWidgetFromPool("skinSource")
-        if (
-            not utils.isEmpty(filePath)
-            and skinSouce != None
-            and isinstance(skinSouce, tk.Label)
-        ):
+        if not utils.isEmpty(filePath) and self.isWidget(skinSouce, tk.Label):
             skinSouce.config(text=filePath)
             self.manager.setSkinPath(filePath)
             self.updateRoleList()
@@ -520,30 +537,27 @@ class MainFrame:
         """选择Mods路径"""
         filePath = askdirectory()
         modSource = self.getWidgetFromPool("modSource")
-        if (
-            not utils.isEmpty(filePath)
-            and modSource != None
-            and isinstance(modSource, tk.Label)
-        ):
+        if not utils.isEmpty(filePath) and self.isWidget(modSource, tk.Label):
             modSource.config(text=filePath)
             self.manager.setModsPath(filePath)
 
     def clickSelectRole(self, event, key: str):
         """点击某一角色图标"""
         self.selectRoleKey = key
+        self.page = "skinListPage"
         displayRoleLabel = self.getWidgetFromPool("skinDisplay")  # 更新所选角色
-        if displayRoleLabel != None and isinstance(displayRoleLabel, tk.Label):
+        if self.isWidget(displayRoleLabel, tk.Label):
             path = os.path.join(self.manager.getSkinPath(), key)
             image = self.getRoleImage(key, path)
             displayRoleLabel.config(image=image)
         displayRoleText = self.getWidgetFromPool("skinDisplayText")  # 更新所选角色信息
-        if displayRoleText != None and isinstance(displayRoleText, tk.Label):
+        if self.isWidget(displayRoleText, tk.Label):
             displayRoleText.config(text=RoleKey.getRoleText(self.selectRoleKey))
         skinSelectText = self.getWidgetFromPool("skinSelectText")  # 清空原选择的信息
-        if skinSelectText != None and isinstance(skinSelectText, tk.Label):
+        if self.isWidget(skinSelectText, tk.Label):
             skinSelectText.config(text="")
         modUseRoleText = self.getWidgetFromPool("modsUseText")  # mods正在使用角色
-        if modUseRoleText != None and isinstance(modUseRoleText, tk.Label):
+        if self.isWidget(modUseRoleText, tk.Label):
             modUseRoleText.config(text=self.getModsUseSkinText(self.selectRoleKey))
         self.displaySkinControl()
         self.updateSkinListPage()
@@ -551,24 +565,28 @@ class MainFrame:
     def clickSelectSkin(self, event, dirName: str):
         """点击选择皮肤"""
         skinSelectLabel = self.getWidgetFromPool("skinSelectText")
-        if isinstance(skinSelectLabel, tk.Label):
+        if self.isWidget(skinSelectLabel, tk.Label):
             skinSelectLabel.config(text=dirName)
 
-    def clickUpdateFile(self, event):
+    def clickUpdateFile(self, event, btn: tk.Button):
         """点击更新到文件"""
+        btn.config(text="更新中...")
         self.manager.writeToFile()
+        btn.config(text="更新成功", fg=FrameConfig.colorSuccess)
+        Thread(target=self.replaceText, args=(btn, "更新"), daemon=False).start()
 
     def backPage(self, event):
         """返回上一页"""
         if not utils.isEmpty(self.selectRoleKey) and not self.skinThreadStopSymbol:
-            utils.stopThread(self.skinThread)  # 终止线程
+            self.stopThread()  # 终止线程
 
             self.selectRoleKey = ""
+            self.page = "roleListPage"
             skinSelectText = self.getWidgetFromPool("skinSelectText")  # 清空原选择的信息
-            if skinSelectText != None and isinstance(skinSelectText, tk.Label):
+            if self.isWidget(skinSelectText, tk.Label):
                 skinSelectText.config(text="")
             modUseRoleText = self.getWidgetFromPool("modsUseText")  # mods正在使用角色
-            if modUseRoleText != None and isinstance(modUseRoleText, tk.Label):
+            if self.isWidget(modUseRoleText, tk.Label):
                 modUseRoleText.config(text="")
             self.cleaerSkinContent()
             self.hideSkinControl()
@@ -578,11 +596,8 @@ class MainFrame:
         """点击替换皮肤"""
         replaceBtn = self.getWidgetFromPool("skinDisplayReplace")
         replaceText = self.getWidgetFromPool("skinSelectText")
-        if (
-            replaceBtn == None
-            or not isinstance(replaceBtn, tk.Button)
-            or replaceText == None
-            or not isinstance(replaceText, tk.Label)
+        if not self.isWidget(replaceBtn, tk.Button) or not self.isWidget(
+            replaceText, tk.Label
         ):
             return
         if replaceBtn != None and replaceBtn["text"] == "替换":
@@ -620,14 +635,14 @@ class MainFrame:
         rolePath = os.path.join(self.manager.getSkinPath(), self.selectRoleKey)
         skinPath = os.path.join(rolePath, pathName)
         replaceBtn = self.getWidgetFromPool("skinDisplayReplace")
-        if isinstance(replaceBtn, tk.Button) and os.path.exists(skinPath):
+        if self.isWidget(replaceBtn, tk.Button) and os.path.exists(skinPath):
             shutil.copytree(skinPath, modFileDir)
             replaceBtn.config(text="替换成功！！", fg=FrameConfig.colorSuccess)
             Thread(
                 target=self.replaceText, args=(replaceBtn, "替换"), daemon=True
             ).start()
             modUseRoleText = self.getWidgetFromPool("modsUseText")  # mods正在使用角色
-            if modUseRoleText != None and isinstance(modUseRoleText, tk.Label):
+            if self.isWidget(modUseRoleText, tk.Label):
                 modUseRoleText.config(text=self.getModsUseSkinText(self.selectRoleKey))
         else:
             replaceBtn.config(text="替换失败(未知原因)", fg=FrameConfig.colorFail)
@@ -637,8 +652,63 @@ class MainFrame:
 
     def replaceText(self, btn: tk.Button, text: str):
         """替换按钮文本"""
-        sleep(3)
+        sleep(2)
         btn.config(text=text, fg=FrameConfig.colorDefault)
+
+    def clickDeleteModSkin(self, event):
+        """点击删除mods路径对应角色的皮肤文件"""
+        deleteBtn = self.getWidgetFromPool("skinDisplayDelete")
+        if self.isWidget(deleteBtn, tk.Button) and deleteBtn["text"] == "删除":
+            useModsLabel = self.getWidgetFromPool("modsUseText")
+            if self.isWidget(useModsLabel, tk.Label):
+                modPath = self.manager.getModsPath()
+                if utils.isEmpty(modPath):
+                    deleteBtn.config(text="未选择Mods路径", fg=FrameConfig.colorFail)
+                    Thread(
+                        target=self.replaceText, args=(deleteBtn, "删除"), daemon=True
+                    ).start()
+                    return
+                elif not os.path.exists(modPath):
+                    deleteBtn.config(text="Mods路径不存在", fg=FrameConfig.colorFail)
+                    Thread(
+                        target=self.replaceText, args=(deleteBtn, "删除"), daemon=True
+                    ).start()
+                    return
+                dirName = useModsLabel["text"]
+                rolePath = os.path.join(modPath, self.selectRoleKey)
+                skinPath = os.path.join(rolePath, dirName)
+                if (
+                    utils.isEmpty(self.selectRoleKey)
+                    or not os.path.exists(rolePath)
+                    or utils.isEmpty(dirName)
+                    or not os.path.exists(skinPath)
+                ):
+                    deleteBtn.config(text="未有使用皮肤", fg=FrameConfig.colorFail)
+                    Thread(
+                        target=self.replaceText, args=(deleteBtn, "删除"), daemon=True
+                    ).start()
+                    return
+                Thread(
+                    target=self.deleteModSkin,
+                    args=(deleteBtn, skinPath, useModsLabel),
+                    daemon=False,
+                ).start()
+
+    def deleteModSkin(self, deleteBtn: tk.Button, skinPath: str, useLabel: tk.Label):
+        """删除正在使用的皮肤"""
+        deleteBtn.config(text="删除中...", fg=FrameConfig.colorDefault)
+        shutil.rmtree(skinPath)
+        useLabel.config(text="")
+        deleteBtn.config(text="删除成功", fg=FrameConfig.colorSuccess)
+        Thread(target=self.replaceText, args=(deleteBtn, "删除"), daemon=True).start()
+
+    def stopThread(self):
+        """停止当前运行的线程"""
+        utils.stopThread(self.skinThread)
+
+    def isWidget(self, widget: tk.Widget, widgetClass):
+        """判断当前是否对应的控件"""
+        return widget != None and isinstance(widget, widgetClass)
 
 
 if __name__ == "__main__":
