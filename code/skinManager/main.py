@@ -23,6 +23,7 @@ class MainFrame:
         self.initWidgetPool()  # 初始化控件池
         self.initMainFrame()  # 初始化第一层
         self.initSideBar()  # 初始化侧边栏
+        self.switchSideBar(None)#隐藏侧边栏
         self.initSkinManager()  # 初始化皮肤管理页面
         self.initRoleListPage()  # 初始化角色选择列表页面
         self.updateRoleList()  # 更新角色列表页面
@@ -46,9 +47,9 @@ class MainFrame:
         self.roleImagePool = {}  # 角色图片池
         self.selectRoleKey = None  # 当前选择的角色
         self.skinImagePool = []  # 角色皮肤图片池
-        self.skinThread = None #加载皮肤的线程
-        self.skinThreadStopSymbol = False #标志正在等待线程结束
-        self.page = "SkinManagePage" #当前查看页
+        self.skinThread = None  # 加载皮肤的线程
+        self.skinThreadStopSymbol = False  # 标志正在等待线程结束
+        self.page = "SkinManagePage"  # 当前查看页
 
     def initWidgetPool(self):
         """初始化控件池"""
@@ -231,14 +232,6 @@ class MainFrame:
 
         self.addWidgetInPool(roleListFrame, "roleList")
 
-        # skinTitleFrame.pack_forget()
-        # roleListFrame.pack_forget()
-        # skinControlCanvas.forget()
-
-        # skinTitleFrame.pack(side=tk.TOP, fill=tk.X)
-        # skinControlCanvas.pack(side=tk.LEFT, fill=tk.Y)
-        # roleListFrame.pack(side=tk.TOP, fill=tk.BOTH, expand=1)
-
     def initRoleListPage(self):
         """初始化角色列表页面"""
         roleListFrame = self.getWidgetFromPool("roleList")
@@ -282,7 +275,7 @@ class MainFrame:
         """更新角色列表控件"""
         self.cleaerSkinContent()
         roleListCanvas = self.getWidgetFromPool("roleListCanvas")
-        roleContentFrame = tk.Frame(roleListCanvas, background="white", borderwidth=5)
+        roleContentFrame = tk.Frame(roleListCanvas, background="white", borderwidth=4)
         roleListCanvas.create_window(0, 0, window=roleContentFrame, anchor=tk.NW)
         self.addWidgetInPool(roleContentFrame, "roleListContent")
 
@@ -295,7 +288,7 @@ class MainFrame:
                     imageIcon = self.getRoleImage(roleDir, rolePath)
                     rowIndex = (roleIndex // 10) + 1
                     columnIndex = (roleIndex % 10) + 1
-                    imageFrame = tk.Frame(roleContentFrame)  # 单个角色框架
+                    imageFrame = tk.Frame(roleContentFrame, borderwidth=13)  # 单个角色框架
                     imageFrame.grid(row=rowIndex, column=columnIndex)
                     imageBtn = tk.Button(imageFrame, image=imageIcon)  # 角色图片按钮
                     imageBtn.pack(side=tk.TOP)
@@ -359,8 +352,8 @@ class MainFrame:
                     continue
                 images = self.getSkinImages(filePath)
                 for image in images:
-                    rowIndex = indexCount % 2
-                    columnIndex = indexCount // 2
+                    rowIndex = indexCount // 5
+                    columnIndex = indexCount % 5
                     skinImageFrame = tk.Frame(roleContentFrame)
                     skinImageFrame.grid(row=rowIndex, column=columnIndex)
                     skinImageBtn = tk.Button(skinImageFrame, image=image)
@@ -568,7 +561,7 @@ class MainFrame:
     def backPage(self, event):
         """返回上一页"""
         if not utils.isEmpty(self.selectRoleKey) and not self.skinThreadStopSymbol:
-            utils.stopThread(self.skinThread)#终止线程
+            utils.stopThread(self.skinThread)  # 终止线程
 
             self.selectRoleKey = ""
             skinSelectText = self.getWidgetFromPool("skinSelectText")  # 清空原选择的信息
@@ -623,7 +616,7 @@ class MainFrame:
         modRolePath = os.path.join(modsPath, self.selectRoleKey)  # mods角色路径
         if os.path.exists(modRolePath):
             shutil.rmtree(modRolePath)  # 清空当前角色正当使用的mod
-        modFileDir = os.path.join(modRolePath,pathName) #创建目标文件夹
+        modFileDir = os.path.join(modRolePath, pathName)  # 创建目标文件夹
         rolePath = os.path.join(self.manager.getSkinPath(), self.selectRoleKey)
         skinPath = os.path.join(rolePath, pathName)
         replaceBtn = self.getWidgetFromPool("skinDisplayReplace")

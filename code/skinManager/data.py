@@ -61,7 +61,7 @@ class FrameConfig:
     frameTitle = "Genshin Skin Manager @Skily_Leyu"  # 窗体标题
 
     roleIconSize = (120, 160)  # 角色图标尺寸
-    roleSkinSize = (230, 450)  # 默认角色皮肤尺寸
+    roleSkinSize = (245, 490)  # 默认角色皮肤尺寸
     skinControlWidth = 220  # 皮肤操作界面宽度
 
     defaultRole = "src/default_role.jpeg"  # 默认角色图片路径
