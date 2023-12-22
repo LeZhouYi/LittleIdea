@@ -487,7 +487,7 @@ class MainFrame:
         """通过Key清空控件池"""
         if key in self.widgetPool:
             for widget in self.widgetPool[key]:
-                if self.isWidget(widget, tk.Widget):
+                if utils.isWidget(widget, tk.Widget):
                     widget.destroy()
 
     def cleaerSkinContent(self):
@@ -528,7 +528,7 @@ class MainFrame:
         """选择皮肤库路径"""
         filePath = askdirectory()
         skinSouce = self.getWidgetFromPool("skinSource")
-        if not utils.isEmpty(filePath) and self.isWidget(skinSouce, tk.Label):
+        if not utils.isEmpty(filePath) and utils.isWidget(skinSouce, tk.Label):
             skinSouce.config(text=filePath)
             self.manager.setSkinPath(filePath)
             self.updateRoleList()
@@ -537,7 +537,7 @@ class MainFrame:
         """选择Mods路径"""
         filePath = askdirectory()
         modSource = self.getWidgetFromPool("modSource")
-        if not utils.isEmpty(filePath) and self.isWidget(modSource, tk.Label):
+        if not utils.isEmpty(filePath) and utils.isWidget(modSource, tk.Label):
             modSource.config(text=filePath)
             self.manager.setModsPath(filePath)
 
@@ -546,18 +546,18 @@ class MainFrame:
         self.selectRoleKey = key
         self.page = "skinListPage"
         displayRoleLabel = self.getWidgetFromPool("skinDisplay")  # 更新所选角色
-        if self.isWidget(displayRoleLabel, tk.Label):
+        if utils.isWidget(displayRoleLabel, tk.Label):
             path = os.path.join(self.manager.getSkinPath(), key)
             image = self.getRoleImage(key, path)
             displayRoleLabel.config(image=image)
         displayRoleText = self.getWidgetFromPool("skinDisplayText")  # 更新所选角色信息
-        if self.isWidget(displayRoleText, tk.Label):
+        if utils.isWidget(displayRoleText, tk.Label):
             displayRoleText.config(text=RoleKey.getRoleText(self.selectRoleKey))
         skinSelectText = self.getWidgetFromPool("skinSelectText")  # 清空原选择的信息
-        if self.isWidget(skinSelectText, tk.Label):
+        if utils.isWidget(skinSelectText, tk.Label):
             skinSelectText.config(text="")
         modUseRoleText = self.getWidgetFromPool("modsUseText")  # mods正在使用角色
-        if self.isWidget(modUseRoleText, tk.Label):
+        if utils.isWidget(modUseRoleText, tk.Label):
             modUseRoleText.config(text=self.getModsUseSkinText(self.selectRoleKey))
         self.displaySkinControl()
         self.updateSkinListPage()
@@ -565,7 +565,7 @@ class MainFrame:
     def clickSelectSkin(self, event, dirName: str):
         """点击选择皮肤"""
         skinSelectLabel = self.getWidgetFromPool("skinSelectText")
-        if self.isWidget(skinSelectLabel, tk.Label):
+        if utils.isWidget(skinSelectLabel, tk.Label):
             skinSelectLabel.config(text=dirName)
 
     def clickUpdateFile(self, event, btn: tk.Button):
@@ -583,10 +583,10 @@ class MainFrame:
             self.selectRoleKey = ""
             self.page = "roleListPage"
             skinSelectText = self.getWidgetFromPool("skinSelectText")  # 清空原选择的信息
-            if self.isWidget(skinSelectText, tk.Label):
+            if utils.isWidget(skinSelectText, tk.Label):
                 skinSelectText.config(text="")
             modUseRoleText = self.getWidgetFromPool("modsUseText")  # mods正在使用角色
-            if self.isWidget(modUseRoleText, tk.Label):
+            if utils.isWidget(modUseRoleText, tk.Label):
                 modUseRoleText.config(text="")
             self.cleaerSkinContent()
             self.hideSkinControl()
@@ -596,7 +596,7 @@ class MainFrame:
         """点击替换皮肤"""
         replaceBtn = self.getWidgetFromPool("skinDisplayReplace")
         replaceText = self.getWidgetFromPool("skinSelectText")
-        if not self.isWidget(replaceBtn, tk.Button) or not self.isWidget(
+        if not utils.isWidget(replaceBtn, tk.Button) or not utils.isWidget(
             replaceText, tk.Label
         ):
             return
@@ -635,14 +635,14 @@ class MainFrame:
         rolePath = os.path.join(self.manager.getSkinPath(), self.selectRoleKey)
         skinPath = os.path.join(rolePath, pathName)
         replaceBtn = self.getWidgetFromPool("skinDisplayReplace")
-        if self.isWidget(replaceBtn, tk.Button) and os.path.exists(skinPath):
+        if utils.isWidget(replaceBtn, tk.Button) and os.path.exists(skinPath):
             shutil.copytree(skinPath, modFileDir)
             replaceBtn.config(text="替换成功！！", fg=FrameConfig.colorSuccess)
             Thread(
                 target=self.replaceText, args=(replaceBtn, "替换"), daemon=True
             ).start()
             modUseRoleText = self.getWidgetFromPool("modsUseText")  # mods正在使用角色
-            if self.isWidget(modUseRoleText, tk.Label):
+            if utils.isWidget(modUseRoleText, tk.Label):
                 modUseRoleText.config(text=self.getModsUseSkinText(self.selectRoleKey))
         else:
             replaceBtn.config(text="替换失败(未知原因)", fg=FrameConfig.colorFail)
@@ -658,9 +658,9 @@ class MainFrame:
     def clickDeleteModSkin(self, event):
         """点击删除mods路径对应角色的皮肤文件"""
         deleteBtn = self.getWidgetFromPool("skinDisplayDelete")
-        if self.isWidget(deleteBtn, tk.Button) and deleteBtn["text"] == "删除":
+        if utils.isWidget(deleteBtn, tk.Button) and deleteBtn["text"] == "删除":
             useModsLabel = self.getWidgetFromPool("modsUseText")
-            if self.isWidget(useModsLabel, tk.Label):
+            if utils.isWidget(useModsLabel, tk.Label):
                 modPath = self.manager.getModsPath()
                 if utils.isEmpty(modPath):
                     deleteBtn.config(text="未选择Mods路径", fg=FrameConfig.colorFail)
@@ -706,9 +706,11 @@ class MainFrame:
         """停止当前运行的线程"""
         utils.stopThread(self.skinThread)
 
-    def isWidget(self, widget: tk.Widget, widgetClass):
-        """判断当前是否对应的控件"""
-        return widget != None and isinstance(widget, widgetClass)
+    def clickCreateSkinImage(self,event):
+        """点击制作预览皮肤"""
+        selectLabel = self.getWidgetFromPool("skinSelectText")
+        if utils.isWidget(selectLabel,tk.Label):
+            selectSkinName = selectLabel["text"]
 
 
 if __name__ == "__main__":
