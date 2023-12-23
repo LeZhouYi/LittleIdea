@@ -58,6 +58,7 @@ class FrameConfig:
     colorDefault = "black" #默认字体颜色
 
     dataFile = "./data.json"  # 默认数据储存位置
+    tempDir = "temp" #临时储存位置
     frameTitle = "Genshin Skin Manager @Skily_Leyu"  # 窗体标题
 
     roleIconSize = (120, 160)  # 角色图标尺寸

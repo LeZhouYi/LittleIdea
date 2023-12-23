@@ -3,6 +3,8 @@ import sys
 import utils
 import shutil
 import tkinter as tk
+import datetime
+import mss
 from tkinter.filedialog import askdirectory
 from manager import Manager
 from PIL import Image, ImageTk
@@ -36,6 +38,7 @@ class MainFrame:
     def initWindow(self):
         """初始化窗口"""
         self.mainWindow.title(FrameConfig.frameTitle)
+        self.mainWindow.geometry("+2000+200")
         self.mainWindow.attributes("-fullscreen", True)  # 全屏
         self.mainWindow.bind(Event.F4, self.close)  # F4退出程序
         self.mainWindow.bind(Event.Escape, self.backPage)
@@ -222,6 +225,7 @@ class MainFrame:
             Event.MouseLefClick, utils.eventAdaptor(self.clickReplaceSkin)
         )
         skinUseDeleteBtn.bind(Event.MouseLefClick, self.clickDeleteModSkin)
+        catchScreenBtn.bind(Event.MouseLefClick, self.clickCreateSkinImage)
 
         self.addWidgetInPool(skinControlCanvas, "skinControlCanvas")
         self.addWidgetInPool(skinControlFrame, "skinControl")
@@ -324,22 +328,22 @@ class MainFrame:
 
     def displaySkinControl(self):
         """显示皮肤管理页面"""
-        # skinTitleFrame = self.getWidgetFromPool("skinTitle")
-        # roleListFrame = self.getWidgetFromPool("roleList")
-        # skinControlCanvas = self.getWidgetFromPool("skinControlCanvas")
+        skinTitleFrame = self.getWidgetFromPool("skinTitle")
+        roleListFrame = self.getWidgetFromPool("roleList")
+        skinControlCanvas = self.getWidgetFromPool("skinControlCanvas")
 
-        # skinTitleFrame.pack_forget()
-        # roleListFrame.pack_forget()
-        # skinControlCanvas.forget()
+        skinTitleFrame.pack_forget()
+        roleListFrame.pack_forget()
+        skinControlCanvas.forget()
 
-        # skinTitleFrame.pack(side=tk.TOP, fill=tk.X)
-        # skinControlCanvas.pack(side=tk.LEFT, fill=tk.Y)
-        # roleListFrame.pack(side=tk.TOP, fill=tk.BOTH, expand=1)
+        skinTitleFrame.pack(side=tk.TOP, fill=tk.X)
+        skinControlCanvas.pack(side=tk.LEFT, fill=tk.Y)
+        roleListFrame.pack(side=tk.TOP, fill=tk.BOTH, expand=1)
 
     def hideSkinControl(self):
         """隐藏皮肤管理页面"""
-        # controlCanvas = self.getWidgetFromPool("skinControlCanvas")
-        # controlCanvas.forget()
+        controlCanvas = self.getWidgetFromPool("skinControlCanvas")
+        controlCanvas.forget()
 
     def updateSkinListPage(self):
         """更新单个角色的皮肤列表"""
@@ -709,9 +713,44 @@ class MainFrame:
     def clickCreateSkinImage(self,event):
         """点击制作预览皮肤"""
         selectLabel = self.getWidgetFromPool("skinSelectText")
-        if utils.isWidget(selectLabel,tk.Label):
-            selectSkinName = selectLabel["text"]
+        createReviewBtn = self.getWidgetFromPool("catchScreen")
+        if utils.isWidget(selectLabel,tk.Label) and utils.isWidget(createReviewBtn,tk.Button):
+            if createReviewBtn["text"]!="截图制作预览":
+                return
+            createReviewBtn.config(text="处理中",fg=FrameConfig.colorDefault)
+            selectSkinName = selectLabel["text"] #选择皮肤名称
+            skinSourcePath = self.manager.getSkinPath() #皮肤源路径
+            if not utils.isPathExist(skinSourcePath):
+                createReviewBtn.config(text="皮肤路径不存在",fg=FrameConfig.colorFail)
+                Thread(target=self.replaceText,args=(createReviewBtn,"截图制作预览"),daemon=False).start()
+                return
+            rolePath = os.path.join(skinSourcePath,self.selectRoleKey)
+            skinPath = os.path.join(rolePath,selectSkinName)
+            if not utils.isPathExist(skinPath):
+                createReviewBtn.config(text="皮肤路径不存在",fg=FrameConfig.colorFail)
+                Thread(target=self.replaceText,args=(createReviewBtn,"截图制作预览"),daemon=False).start()
+                return
+            createReviewBtn.config(text="截图中",fg=FrameConfig.colorDefault)
+            tempPath = os.path.join(sys.path[0],FrameConfig.tempDir)
+            utils.createDir(tempPath) #临时图片存储位置
 
+            fileName = "%d.png"%datetime.datetime.now().timestamp()
+            tempFilePath = os.path.join(tempPath,fileName)
+            generater = mss.mss().save(mon=2,output=tempFilePath) #截图
+            next(generater)
+            createReviewBtn.config(text="制作预览中",fg=FrameConfig.colorDefault)
+
+            filePath = os.path.join(skinPath,fileName)
+            image = Image.open(tempFilePath)
+            regionStage = utils.getCropStage(image.width,image.height)
+            if regionStage!=None:
+                regoinImage = image.crop(regionStage)
+                regoinImage.save(filePath)
+            shutil.rmtree(tempPath)
+            createReviewBtn.config(text="操作成功",fg=FrameConfig.colorSuccess)
+            Thread(target=self.replaceText,args=(createReviewBtn,"截图制作预览"),daemon=False).start()
+            self.stopThread()
+            self.updateSkinListPage()
 
 if __name__ == "__main__":
     MainFrame()

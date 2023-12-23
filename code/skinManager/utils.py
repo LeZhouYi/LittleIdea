@@ -61,3 +61,16 @@ def isWidget(widget: tk.Widget, widgetClass):
 def isPathExist(path:str)->bool:
     """判断路径是否存在"""
     return isNotEmpty(path) and os.path.exists(path)
+
+def createDir(path:str):
+    """创建文件夹"""
+    if not os.path.exists(path):
+        os.mkdir(path)
+
+def getCropStage(width:int,height:int)->tuple|None:
+    """获取剪切策略"""
+    if width == 1920 and height== 1080:
+        return (715,100,1205,1080)
+    elif width == 3840 and height == 2160:
+        return (1430,200,2410,2160)
+    return None
