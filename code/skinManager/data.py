@@ -57,7 +57,7 @@ class FrameConfig:
     colorFail = "red" #操作失败的字体颜色
     colorDefault = "black" #默认字体颜色
 
-    dataFile = "./data.json"  # 默认数据储存位置
+    dataFile = "data.json"  # 默认数据储存位置
     tempDir = "temp" #临时储存位置
     frameTitle = "Genshin Skin Manager @Skily_Leyu"  # 窗体标题
 
@@ -65,8 +65,8 @@ class FrameConfig:
     roleSkinSize = (245, 490)  # 默认角色皮肤尺寸
     skinControlWidth = 220  # 皮肤操作界面宽度
 
-    defaultRole = "src/default_role.jpeg"  # 默认角色图片路径
-    defaultSkin = "src/default_skin.png" #默认皮肤图片路径
+    defaultRole = "src\default_role.jpeg"  # 默认角色图片路径
+    defaultSkin = "src\default_skin.png" #默认皮肤图片路径
     defaultRoleKey = "defalut"  # 默认角色Key
 
 
