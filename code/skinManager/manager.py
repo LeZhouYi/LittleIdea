@@ -24,7 +24,7 @@ class Manager:
     def loadByFile(self):
         """从文件中读取数据"""
         jsonData = None
-        file = os.path.join(sys.path[0], FrameConfig.dataFile)
+        file = os.path.join(os.getcwd(), FrameConfig.dataFile)
         if os.path.exists(file):
             with open(file, encoding="utf-8") as f:
                 jsonData = json.load(f)
@@ -35,7 +35,7 @@ class Manager:
     def writeToFile(self):
         """将当前数据写到文件"""
         jsonData = {"skinSourcePath": self.skinSourcePath, "modsPath": self.modsPath}
-        file = os.path.join(sys.path[0], FrameConfig.dataFile)
+        file = os.path.join(os.getcwd(), FrameConfig.dataFile)
         if os.path.exists(file):
             with open(file, encoding="utf-8", mode="w") as f:
                 f.write(json.dumps(jsonData))

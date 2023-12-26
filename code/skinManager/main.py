@@ -38,8 +38,8 @@ class MainFrame:
     def initWindow(self):
         """初始化窗口"""
         self.mainWindow.title(FrameConfig.frameTitle)
-        self.mainWindow.geometry("+2000+200")
-        self.mainWindow.attributes("-fullscreen", True)  # 全屏
+        self.mainWindow.geometry("1536x828-1530+0")
+        # self.mainWindow.attributes("-fullscreen", True)  # 全屏
         self.mainWindow.bind(Event.F4, self.close)  # F4退出程序
         self.mainWindow.bind(Event.Escape, self.backPage)
         self.mainWindow.bind(Event.Tab, self.switchSideBar)  # 切换侧边栏
@@ -60,8 +60,8 @@ class MainFrame:
 
     def initMainFrame(self):
         """初始化第一层控件"""
-        sideBarFrame = tk.Frame(self.getMainFrame(), background="yellow")  # 侧边栏
-        contentFrame = tk.Frame(self.getMainFrame(), background="green")  # 内容页
+        sideBarFrame = tk.Frame(self.getMainFrame(), background="white")  # 侧边栏
+        contentFrame = tk.Frame(self.getMainFrame(), background="white")  # 内容页
 
         sideBarFrame.pack(side=tk.LEFT, fill=tk.Y, ipady=3)
         contentFrame.pack(side=tk.LEFT, fill=tk.BOTH, expand=1)
@@ -73,11 +73,11 @@ class MainFrame:
         """初始化侧边栏"""
         sideBarFrame = self.getWidgetFromPool("sideBar")  # 侧边栏框架
 
-        sideBarCanvas = tk.Canvas(sideBarFrame, background="blue")  # 侧边栏画布
+        sideBarCanvas = tk.Canvas(sideBarFrame, background="white")  # 侧边栏画布
         sideBarScroll = tk.Scrollbar(
-            sideBarFrame, orient=tk.VERTICAL, width=2, background="pink"
+            sideBarFrame, orient=tk.VERTICAL, width=2, background="white"
         )  # 侧边栏竖向滚动条
-        sideBarScrollFrame = tk.Frame(sideBarCanvas, background="pink", borderwidth=5)
+        sideBarScrollFrame = tk.Frame(sideBarCanvas, background="white", borderwidth=5)
         skinManagerBtn = tk.Button(
             sideBarScrollFrame, text="皮肤管理", font=FrameConfig.font, width=15
         )
@@ -118,12 +118,19 @@ class MainFrame:
         """初始化皮肤管理页面"""
         contentFrame = self.getWidgetFromPool("content")
 
-        skinTitleFrame = tk.Frame(contentFrame)  # 显示皮肤标题一栏
-        skinSourceFrame = tk.Frame(skinTitleFrame)  # 皮肤标题第一行
-        skinSourceLabel = tk.Label(skinSourceFrame, text="皮肤库", font=FrameConfig.font)
-        skinSourceSetBtn = tk.Button(skinSourceFrame, text="更新", font=FrameConfig.font)
+        skinTitleFrame = tk.Frame(contentFrame, background="white")  # 显示皮肤标题一栏
+        skinSourceFrame = tk.Frame(skinTitleFrame, background="white")  # 皮肤标题第一行
+        skinSourceLabel = tk.Label(
+            skinSourceFrame, text="皮肤库", font=FrameConfig.font, background="white"
+        )
+        skinSourceSetBtn = tk.Button(
+            skinSourceFrame, text="更新", font=FrameConfig.font, background="white"
+        )
         skinSource = tk.Label(
-            skinSourceFrame, text=self.getSkinPathText(), font=FrameConfig.font
+            skinSourceFrame,
+            text=self.getSkinPathText(),
+            font=FrameConfig.font,
+            background="white",
         )
 
         skinTitleFrame.pack(side=tk.TOP, fill=tk.X)
@@ -144,11 +151,18 @@ class MainFrame:
         self.addWidgetInPool(skinSourceSetBtn, "skinSourceBtn")
         self.addWidgetInPool(skinSource, "skinSource")
 
-        modSourceFrame = tk.Frame(skinTitleFrame)  # 皮肤标题第二行
-        modSourceLabel = tk.Label(modSourceFrame, text="Mods", font=FrameConfig.font)
-        modSourceBtn = tk.Button(modSourceFrame, text="更新", font=FrameConfig.font)
+        modSourceFrame = tk.Frame(skinTitleFrame, background="white")  # 皮肤标题第二行
+        modSourceLabel = tk.Label(
+            modSourceFrame, text="Mods", font=FrameConfig.font, background="white"
+        )
+        modSourceBtn = tk.Button(
+            modSourceFrame, text="更新", font=FrameConfig.font, background="white"
+        )
         modSource = tk.Label(
-            modSourceFrame, text=self.getModPathText(), font=FrameConfig.font
+            modSourceFrame,
+            text=self.getModPathText(),
+            font=FrameConfig.font,
+            background="white",
         )  # 3dmigoto目标路径
 
         modSourceFrame.pack(side=tk.TOP, fill=tk.X)
@@ -167,44 +181,49 @@ class MainFrame:
         self.addWidgetInPool(modSourceBtn, "modSourceBtn")
         self.addWidgetInPool(modSource, "modSource")
 
-        skinControlCanvas = tk.Canvas(contentFrame, background="yellow")  # 皮肤操作页面包管理
-        skinControlFrame = tk.Frame(skinControlCanvas, background="green")  # 显示皮肤操作一栏
+        skinControlCanvas = tk.Canvas(contentFrame, background="white")  # 皮肤操作页面包管理
+        skinControlFrame = tk.Frame(skinControlCanvas, background="white")  # 显示皮肤操作一栏
         roleSelectDisplay = tk.Label(
             skinControlFrame,
             image=self.getDefaultRoleImage(),
-            background="blue",
+            background="white",
             width=FrameConfig.skinControlWidth,
         )  # 显示当前选择的角色图标
         roleSelectText = tk.Label(
             skinControlFrame,
             text=RoleKey.getRoleText(FrameConfig.defaultRoleKey),
-            background="pink",
+            background="white",
             font=FrameConfig.font,
         )  # 显示当前选择的角色文本
-        skinSelectFrame = tk.Frame(skinControlFrame)  # 已选皮肤一栏
+        skinSelectFrame = tk.Frame(skinControlFrame, background="white")  # 已选皮肤一栏
         skinSelectLabel = tk.Label(
-            skinSelectFrame, text="当前选择：", anchor=tk.NW, font=FrameConfig.font
+            skinSelectFrame, text="当前选择：", anchor=tk.NW, font=FrameConfig.font,background="white"
         )  # 已选皮肤标签
         skinSelectText = tk.Label(
-            skinSelectFrame, text="", font=FrameConfig.font
+            skinSelectFrame, text="", font=FrameConfig.font, background="white"
         )  # 已选皮肤文件名
         skinReplaceBtn = tk.Button(
-            skinControlFrame, text="替换", font=FrameConfig.font
+            skinControlFrame, text="替换", font=FrameConfig.font, background="white"
         )  # 替换皮肤
-        skinBeSetFrame = tk.Frame(skinControlFrame)  # 当前使用的皮肤
+        skinBeSetFrame = tk.Frame(skinControlFrame, background="white")  # 当前使用的皮肤
         skinBeSetLabel = tk.Label(
-            skinBeSetFrame, text="当前使用：", anchor=tk.NW, font=FrameConfig.font
+            skinBeSetFrame,
+            text="当前使用：",
+            anchor=tk.NW,
+            font=FrameConfig.font,
+            background="white",
         )  # 已使用皮肤标签
         skinBeSetText = tk.Label(
             skinBeSetFrame,
             text=self.getModsUseSkinText(FrameConfig.defaultRoleKey),
             font=FrameConfig.font,
+            background="white",
         )  # 已使用皮肤文件名
         skinUseDeleteBtn = tk.Button(
-            skinControlFrame, text="删除", font=FrameConfig.font
+            skinControlFrame, text="删除", font=FrameConfig.font, background="white"
         )  # 删除正在使用的皮肤
         catchScreenBtn = tk.Button(
-            skinControlFrame, text="截图制作预览", font=FrameConfig.font
+            skinControlFrame, text="截图制作预览", font=FrameConfig.font, background="white"
         )  # 截图并作为皮肤预览图
 
         skinControlCanvas.pack(side=tk.LEFT, fill=tk.Y)
@@ -239,11 +258,11 @@ class MainFrame:
         self.addWidgetInPool(skinBeSetLabel, "skinSelectLabel")
         self.addWidgetInPool(skinBeSetText, "modsUseText")
         self.addWidgetInPool(skinUseDeleteBtn, "skinDisplayDelete")
-        self.addWidgetInPool(catchScreenBtn,"catchScreen")
+        self.addWidgetInPool(catchScreenBtn, "catchScreen")
 
         self.hideSkinControl()
 
-        roleListFrame = tk.Frame(contentFrame, background="brown")  # 显示皮肤内容一栏
+        roleListFrame = tk.Frame(contentFrame, background="white")  # 显示皮肤内容一栏
         roleListFrame.pack(side=tk.TOP, fill=tk.BOTH, expand=1)
 
         self.addWidgetInPool(roleListFrame, "roleList")
@@ -252,12 +271,12 @@ class MainFrame:
         """初始化角色列表页面"""
         roleListFrame = self.getWidgetFromPool("roleList")
 
-        roleListCanvas = tk.Canvas(roleListFrame, background="pink")  # 角色选择页面画布
+        roleListCanvas = tk.Canvas(roleListFrame, background="white")  # 角色选择页面画布
         roleListScrollX = tk.Scrollbar(
-            roleListFrame, orient=tk.HORIZONTAL, width=2, background="green"
+            roleListFrame, orient=tk.HORIZONTAL, width=2, background="white"
         )  # 横向滚动条
         roleListScrollY = tk.Scrollbar(
-            roleListFrame, orient=tk.VERTICAL, width=2, background="blue"
+            roleListFrame, orient=tk.VERTICAL, width=2, background="white"
         )  # 竖向滚动条
         roleListCanvas.config(
             xscrollcommand=roleListScrollX.set,
@@ -304,9 +323,13 @@ class MainFrame:
                     imageIcon = self.getRoleImage(roleDir, rolePath)
                     rowIndex = (roleIndex // 10) + 1
                     columnIndex = (roleIndex % 10) + 1
-                    imageFrame = tk.Frame(roleContentFrame, borderwidth=13)  # 单个角色框架
+                    imageFrame = tk.Frame(
+                        roleContentFrame, borderwidth=13, background="white"
+                    )  # 单个角色框架
                     imageFrame.grid(row=rowIndex, column=columnIndex)
-                    imageBtn = tk.Button(imageFrame, image=imageIcon)  # 角色图片按钮
+                    imageBtn = tk.Button(
+                        imageFrame, image=imageIcon, background="white"
+                    )  # 角色图片按钮
                     imageBtn.pack(side=tk.TOP)
                     imageBtn.bind(
                         Event.MouseLefClick,
@@ -316,6 +339,7 @@ class MainFrame:
                         imageFrame,
                         text=RoleKey.getRoleText(roleDir),
                         font=FrameConfig.font,
+                        background="white",
                     )  # 角色名
                     imageLabel.pack(side=tk.TOP)
                     self.addWidgetInPool(imageFrame, "singleRole")
@@ -370,17 +394,34 @@ class MainFrame:
                 for image in images:
                     rowIndex = indexCount // 5
                     columnIndex = indexCount % 5
-                    skinImageFrame = tk.Frame(roleContentFrame)
+                    skinImageFrame = tk.Frame(roleContentFrame, background="white")
                     skinImageFrame.grid(row=rowIndex, column=columnIndex)
-                    skinImageBtn = tk.Button(skinImageFrame, image=image)
+                    skinImageBtn = tk.Button(
+                        skinImageFrame, image=image, background="white"
+                    )
                     skinImageBtn.pack(side=tk.TOP)
                     skinImageLabel = tk.Label(
-                        skinImageFrame, text=fileDir, font=FrameConfig.font
+                        skinImageFrame,
+                        text=fileDir,
+                        font=FrameConfig.font,
+                        background="white",
                     )
                     skinImageLabel.pack(side=tk.TOP, fill=tk.X)
                     skinImageBtn.bind(
                         Event.MouseLefClick,
                         utils.eventAdaptor(self.clickSelectSkin, dirName=fileDir),
+                    )
+                    skinImageBtn.bind(
+                        Event.MouseWheel,
+                        utils.eventAdaptor(
+                            self.scrollVerticalCanvas, widget=roleListCanvas
+                        ),
+                    )
+                    skinImageLabel.bind(
+                        Event.MouseWheel,
+                        utils.eventAdaptor(
+                            self.scrollVerticalCanvas, widget=roleListCanvas
+                        ),
                     )
                     self.addSkinImage(image)
 
@@ -436,7 +477,7 @@ class MainFrame:
 
     def getDefaultSkinImage(self) -> tk.PhotoImage:
         """获取默认皮肤图片"""
-        filePath = os.path.join(sys.path[0], FrameConfig.defaultSkin)
+        filePath = os.path.join(os.getcwd(), FrameConfig.defaultSkin)
         image = Image.open(filePath).resize(FrameConfig.roleSkinSize)
         return ImageTk.PhotoImage(image)
 
@@ -460,7 +501,7 @@ class MainFrame:
     def getDefaultRoleImage(self) -> tk.PhotoImage:
         """获取默认的角色图片"""
         if FrameConfig.defaultRoleKey not in self.roleImagePool:
-            path = os.path.join(sys.path[0], FrameConfig.defaultRole)
+            path = os.path.join(os.getcwd(), FrameConfig.defaultRole)
             image = Image.open(path).resize(FrameConfig.roleIconSize)
             image = ImageTk.PhotoImage(image)
             self.addRoleImage(image, FrameConfig.defaultRoleKey)
@@ -710,47 +751,60 @@ class MainFrame:
         """停止当前运行的线程"""
         utils.stopThread(self.skinThread)
 
-    def clickCreateSkinImage(self,event):
+    def clickCreateSkinImage(self, event):
         """点击制作预览皮肤"""
         selectLabel = self.getWidgetFromPool("skinSelectText")
         createReviewBtn = self.getWidgetFromPool("catchScreen")
-        if utils.isWidget(selectLabel,tk.Label) and utils.isWidget(createReviewBtn,tk.Button):
-            if createReviewBtn["text"]!="截图制作预览":
+        if utils.isWidget(selectLabel, tk.Label) and utils.isWidget(
+            createReviewBtn, tk.Button
+        ):
+            if createReviewBtn["text"] != "截图制作预览":
                 return
-            createReviewBtn.config(text="处理中",fg=FrameConfig.colorDefault)
-            selectSkinName = selectLabel["text"] #选择皮肤名称
-            skinSourcePath = self.manager.getSkinPath() #皮肤源路径
+            createReviewBtn.config(text="处理中", fg=FrameConfig.colorDefault)
+            selectSkinName = selectLabel["text"]  # 选择皮肤名称
+            skinSourcePath = self.manager.getSkinPath()  # 皮肤源路径
             if not utils.isPathExist(skinSourcePath):
-                createReviewBtn.config(text="皮肤路径不存在",fg=FrameConfig.colorFail)
-                Thread(target=self.replaceText,args=(createReviewBtn,"截图制作预览"),daemon=False).start()
+                createReviewBtn.config(text="皮肤路径不存在", fg=FrameConfig.colorFail)
+                Thread(
+                    target=self.replaceText,
+                    args=(createReviewBtn, "截图制作预览"),
+                    daemon=False,
+                ).start()
                 return
-            rolePath = os.path.join(skinSourcePath,self.selectRoleKey)
-            skinPath = os.path.join(rolePath,selectSkinName)
+            rolePath = os.path.join(skinSourcePath, self.selectRoleKey)
+            skinPath = os.path.join(rolePath, selectSkinName)
             if not utils.isPathExist(skinPath):
-                createReviewBtn.config(text="皮肤路径不存在",fg=FrameConfig.colorFail)
-                Thread(target=self.replaceText,args=(createReviewBtn,"截图制作预览"),daemon=False).start()
+                createReviewBtn.config(text="皮肤路径不存在", fg=FrameConfig.colorFail)
+                Thread(
+                    target=self.replaceText,
+                    args=(createReviewBtn, "截图制作预览"),
+                    daemon=False,
+                ).start()
                 return
-            createReviewBtn.config(text="截图中",fg=FrameConfig.colorDefault)
-            tempPath = os.path.join(sys.path[0],FrameConfig.tempDir)
-            utils.createDir(tempPath) #临时图片存储位置
+            createReviewBtn.config(text="截图中", fg=FrameConfig.colorDefault)
+            tempPath = os.path.join(os.getcwd, FrameConfig.tempDir)
+            utils.createDir(tempPath)  # 临时图片存储位置
 
-            fileName = "%d.png"%datetime.datetime.now().timestamp()
-            tempFilePath = os.path.join(tempPath,fileName)
-            generater = mss.mss().save(mon=2,output=tempFilePath) #截图
+            fileName = "%d.png" % datetime.datetime.now().timestamp()
+            tempFilePath = os.path.join(tempPath, fileName)
+            generater = mss.mss().save(mon=2, output=tempFilePath)  # 截图
             next(generater)
-            createReviewBtn.config(text="制作预览中",fg=FrameConfig.colorDefault)
+            createReviewBtn.config(text="制作预览中", fg=FrameConfig.colorDefault)
 
-            filePath = os.path.join(skinPath,fileName)
+            filePath = os.path.join(skinPath, fileName)
             image = Image.open(tempFilePath)
-            regionStage = utils.getCropStage(image.width,image.height)
-            if regionStage!=None:
+            regionStage = utils.getCropStage(image.width, image.height)
+            if regionStage != None:
                 regoinImage = image.crop(regionStage)
                 regoinImage.save(filePath)
             shutil.rmtree(tempPath)
-            createReviewBtn.config(text="操作成功",fg=FrameConfig.colorSuccess)
-            Thread(target=self.replaceText,args=(createReviewBtn,"截图制作预览"),daemon=False).start()
+            createReviewBtn.config(text="操作成功", fg=FrameConfig.colorSuccess)
+            Thread(
+                target=self.replaceText, args=(createReviewBtn, "截图制作预览"), daemon=False
+            ).start()
             self.stopThread()
             self.updateSkinListPage()
+
 
 if __name__ == "__main__":
     MainFrame()
