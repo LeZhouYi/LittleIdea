@@ -17,7 +17,7 @@ transMap = {
 
 def main():
     data={
-        "pattern":"a-(b-c-e)=d",
+        "pattern":"a/b-f*g=c+d",
         "keys":[
             {
                 "a":"13"
@@ -33,6 +33,15 @@ def main():
             },
             {
                 "d":"13"
+            },
+            {
+                "f":"13"
+            },
+            {
+                "g":"13"
+            },
+            {
+                "h":"#"
             }
         ]
     }
@@ -133,7 +142,6 @@ def getCalTree(calStr:str):
         else:
             parentNode = TreeNode(char).addLeftChild(calTreeStack.pop()).addRightChild(calTreeStack.pop())
             calTreeStack.append(parentNode)
-    print(getCalStr(calTreeStack[0]))
     return calTreeStack
 
 def getSuffixCal(calStr:str)->str:
@@ -159,6 +167,8 @@ def getSuffixCal(calStr:str)->str:
                     if level[popElement]>=level[char]:
                         popElement = elementStack.pop() #优先级大于或等于当前的弹出
                         suffixCalStr+=popElement
+                    else:
+                        break
             elementStack.append(char)
         else:
             suffixCalStr+=char
@@ -187,9 +197,13 @@ def getValueIndexs(calSourceList,keys):
     indexs = []
     for i in range(len(calSourceList)):
         calStr = calSourceList[i]
+        flags = False #标记当前是否有答案
         for key in keys:
-            if str(calStr).find(key)<0:
-                indexs.append(i)
+            if str(calStr).find(key)>=0:
+                flags = True
+                break
+        if not flags:
+            indexs.append(i)
     return indexs
 
 def getResultIndexs(calSourceList,keys):
