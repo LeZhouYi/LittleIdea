@@ -5,6 +5,24 @@ def createPath(path:str)->None:
     if not os.path.exists(path):
         os.makedirs(path)
 
+def isChineseChar(char:str)->bool:
+    """判断是否为中文字符"""
+    if '\u2E80' <= char <= '\u2EF3':
+        return True
+    elif '\u2F00' <= char <= '\u2FD5':
+        return True
+    elif '\u3005' <= char <= '\u3029':
+        return True
+    elif '\u3038' <= char <= '\u4DB5':
+        return True
+    elif '\u4E00' <= char <= '\uFA6A':
+        return True
+    elif '\uFA70' <= char <= '\uFAD9':
+        return True
+    elif '\u20000' <= char <= '\u2FA1D':
+        return True
+    return False
+
 def toUnicode(text:str)->str:
     '''将文本包含中文的部分转为unicode字符串'''
     toText = ""

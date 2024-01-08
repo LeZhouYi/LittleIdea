@@ -8,10 +8,9 @@ import mss
 from tkinter.filedialog import askdirectory
 from manager import Manager
 from PIL import Image, ImageTk
-from tkinter import ttk
 from threading import Thread
 from time import sleep
-from data import RoleKey, FrameConfig, Event
+from data import FrameConfig, Event
 
 
 class MainFrame:
@@ -191,7 +190,7 @@ class MainFrame:
         )  # 显示当前选择的角色图标
         roleSelectText = tk.Label(
             skinControlFrame,
-            text=RoleKey.getRoleText(FrameConfig.defaultRoleKey),
+            text=self.manager.getRoleText(FrameConfig.defaultRoleKey),
             background="white",
             font=FrameConfig.font,
         )  # 显示当前选择的角色文本
@@ -319,7 +318,7 @@ class MainFrame:
             roleIndex = 0
             for roleDir in os.listdir(skinSourcePath):
                 rolePath = os.path.join(skinSourcePath, roleDir)
-                if os.path.isdir(rolePath) and RoleKey.existRole(roleDir):
+                if os.path.isdir(rolePath) and self.manager.existRole(roleDir):
                     imageIcon = self.getRoleImage(roleDir, rolePath)
                     rowIndex = (roleIndex // 10) + 1
                     columnIndex = (roleIndex % 10) + 1
@@ -337,7 +336,7 @@ class MainFrame:
                     )
                     imageLabel = tk.Label(
                         imageFrame,
-                        text=RoleKey.getRoleText(roleDir),
+                        text=self.manager.getRoleText(roleDir),
                         font=FrameConfig.font,
                         background="white",
                     )  # 角色名
@@ -597,7 +596,7 @@ class MainFrame:
             displayRoleLabel.config(image=image)
         displayRoleText = self.getWidgetFromPool("skinDisplayText")  # 更新所选角色信息
         if utils.isWidget(displayRoleText, tk.Label):
-            displayRoleText.config(text=RoleKey.getRoleText(self.selectRoleKey))
+            displayRoleText.config(text=self.manager.getRoleText(self.selectRoleKey))
         skinSelectText = self.getWidgetFromPool("skinSelectText")  # 清空原选择的信息
         if utils.isWidget(skinSelectText, tk.Label):
             skinSelectText.config(text="")
