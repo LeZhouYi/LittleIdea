@@ -44,6 +44,9 @@ class Config:
             self.skinControlWidth = jsonData["skinControlWidth"]
             self.defaultSkin = jsonData["defaultSkin"]
             self.roleSkinSize = jsonData["roleSkinSize"]
+            self.colorSuccess = jsonData["colorSuccess"]
+            self.colorDefault = jsonData["colorDefault"]
+            self.colorFail = jsonData["colorFail"]
 
     def writeToFile(self):
         """将当前数据写到文件"""
@@ -60,7 +63,12 @@ class Config:
             "defaultRoleIcon":self.defaultRoleIcon,
             "skinControlWidth": self.skinControlWidth,
             "defaultSkin":self.defaultSkin,
-            "roleSkinSize":self.roleSkinSize
+            "roleSkinSize":self.roleSkinSize,
+            "windowWidth":self.windowWidth,
+            "windowHeight":self.windowHeight,
+            "colorSuccess":self.colorSuccess,
+            "colorDefault":self.colorDefault,
+            "colorFail": self.colorFail
         }
         file = os.path.join(os.getcwd(), FrameConfig.dataFile)
         if os.path.exists(file):
@@ -114,7 +122,7 @@ class Config:
 
     def getRoleColoumnMax(self,width:int)->int:
         """获取一行最多角色数"""
-        return math.floor(width/(self.roleIconSize[0]+10))
+        return math.floor(width/(self.roleIconSize[0]+20))
 
     def getRoleBtnBorder(self,width:int,columnMax:int)->int:
         """获取角色按钮合成的边距"""
@@ -132,3 +140,15 @@ class Config:
     def getRoleSkinSize(self)->tuple:
         """获取默认皮肤尺寸"""
         return tuple(self.roleSkinSize)
+
+    def getColorSuccess(self)->str:
+        """操作成功字体颜色"""
+        return self.colorSuccess
+
+    def getColorDefault(self)->str:
+        """默认字体颜色"""
+        return self.colorDefault
+
+    def getColorFail(self)->str:
+        """操作失败字体颜色"""
+        return self.colorFail

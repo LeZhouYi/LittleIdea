@@ -1,10 +1,12 @@
 import os
 import utils
 import threading
+import shutil
 import tkinter as tk
 import widgetControl as wc
 import threadControl as tc
 import soruceControl as sc
+from time import sleep
 from PIL import Image, ImageTk
 from config import Config
 from data import Event
@@ -30,7 +32,7 @@ class MainFrame:
         self.mainWindow = tk.Tk()  # 主窗口
         self.mainWindow.geometry(self.getGeometry())
         self.mainWindow.title(self.config.getTitle())#标题
-        self.cacheWidget(self.mainWindow, None, "BaseWindow", None)  # 缓存主窗口
+        self.cacheWidget(self.mainWindow, None, "BaseWindow", None)  # 缓存主窗
 
 #######################具体布局################################
 
@@ -40,16 +42,19 @@ class MainFrame:
         contentFrame = tk.Frame(mainWindow, cnf=self.widgetCnf())#基础内容页
         skinPathFrame = tk.Frame(contentFrame,cnf=self.widgetCnf()) #皮肤路径
         skinPathLabel = tk.Label(skinPathFrame,text="皮肤路径",width=10,cnf=self.textCnf())
-        skinSourceLabel = tk.Label(skinPathFrame,cnf=self.textCnf()) #显示皮肤路径
+        skinSourceLabel = tk.Label(skinPathFrame,text=self.config.getSkinPath(),cnf=self.textCnf()) #显示皮肤路径
         skinPathUpateBtn = tk.Button(skinPathFrame,text="更新",cnf=self.textCnf())#更新
         modPathFrame = tk.Frame(contentFrame,cnf=self.widgetCnf()) #Mods路径
         modPathLabel = tk.Label(modPathFrame,text="Mods路径",width=10,cnf=self.textCnf())
-        modSourceLabel = tk.Label(modPathFrame,cnf=self.textCnf())#显示Mods路径
+        modSourceLabel = tk.Label(modPathFrame,text=self.config.getModsPath(),cnf=self.textCnf())#显示Mods路径
         modPathUpdateBtn = tk.Button(modPathFrame,text="更新",cnf=self.textCnf())#更新
         contentPageCanvas = tk.Canvas(contentFrame,cnf=self.widgetCnf())#内容页框架
         contentPageScroll = tk.Scrollbar(contentFrame,cnf=self.scrollCnf())#滚动条
 
         skinSourceLabel.bind(Event.MouseLefClick,self.clickSelectSkinPath)#选择皮肤路径
+        skinPathUpateBtn.bind(Event.MouseLefClick,utils.eventAdaptor(self.clickUpdateConfig,btn=skinPathUpateBtn))#更新
+        modSourceLabel.bind(Event.MouseLefClick,self.clickSelectModsPath)#选择mods路径
+        modPathUpdateBtn.bind(Event.MouseLefClick,utils.eventAdaptor(self.clickUpdateConfig,btn=modPathUpdateBtn))#更新
 
         contentPageCanvas.config(yscrollcommand=contentPageScroll.set,yscrollincrement=1)
         contentPageScroll.config(command=contentPageCanvas.yview) #绑定滚动
@@ -72,10 +77,11 @@ class MainFrame:
         skinPath = self.getSkinPath()
         if not utils.isPathExist(skinPath):
             return
+        contentFrame = self.getWidget("contentFrame")
         contentPageCanvas = self.getWidget("contentPageCanvas") #内容画布
         contentPageFrame = self.getWidget("contentPageFrame") #内容主框架
         roleIndex = 0
-        rolePageWidth = contentPageCanvas.winfo_width() #当前内容页宽度
+        rolePageWidth = contentFrame.winfo_width() #当前内容页宽度
         columnMax = self.config.getRoleColoumnMax(rolePageWidth) #一行最多显示角色数
         border = self.config.getRoleBtnBorder(rolePageWidth,columnMax) #角色图标合适边距
         for fileDir in os.listdir(skinPath):
@@ -137,6 +143,8 @@ class MainFrame:
                     skinSingleBtn = tk.Button(skinSingleFrame,image=image,cnf=self.widgetCnf()) #皮肤按钮
                     skinSingleText = tk.Label(skinSingleFrame,text=fileDir,cnf=self.textCnf()) #皮肤文本
 
+                    skinSingleBtn.bind(Event.MouseLefClick,utils.eventAdaptor(self.clickSelectSkin,skinPath=fileDir)) #绑定事件
+
                     self.cacheWidgetByGrid(skinSingleFrame,"contentPageFrame","skinSingleFrame_%d"%skinIndex,cnf=self.gridCnf(rowIndex,columnIndex))
                     self.cacheWidget(skinSingleBtn,"skinSingleFrame_%d"%skinIndex,"skinSingleBtn_%d"%skinIndex,cnf=self.packCnf(tk.NONE,tk.TOP,tk.N))
                     self.cacheWidget(skinSingleText,"skinSingleFrame_%d"%skinIndex,"skinSingleText_%d"%skinIndex,cnf=self.packCnf(tk.X,tk.TOP,tk.CENTER))
@@ -152,10 +160,30 @@ class MainFrame:
         roleImage = self.getRoleImage(key,self.getSkinPath())
         controlDisplayLabel = tk.Label(controlDisplayFrame,width=self.config.getControlPanelWidth(),image=roleImage,cnf=self.widgetCnf()) #角色图标
         controlDisplayText = tk.Label(controlDisplayFrame,text=self.config.getRoleText(key),cnf=self.textCnf()) #角色名称
+        controlSelectFrame = tk.Frame(skinControlFrame,cnf=self.widgetCnf()) #选择的皮肤操作
+        controlSelectLabel = tk.Label(controlSelectFrame,text="当前选择:",cnf=self.textCnf())
+        controlSelectText = tk.Label(controlSelectFrame,text="",cnf=self.textCnf())
+        controlReplaceBtn = tk.Button(controlSelectFrame,text="替换",cnf=self.textCnf())
+        controlCatchBtn = tk.Button(controlSelectFrame,text="截图制作预览",cnf=self.textCnf())
+        controlNowFrame = tk.Frame(skinControlFrame,cnf=self.widgetCnf()) #当前使用的皮肤操作
+        controlNowLabel = tk.Label(controlNowFrame,text="当前使用:",cnf=self.textCnf())
+        controlNowText = tk.Label(controlNowFrame,text="",cnf=self.textCnf())
+        controlNowDelete = tk.Button(controlNowFrame,text="删除",cnf=self.textCnf())
+
+        controlReplaceBtn.bind(Event.MouseLefClick,self.clickReplaceSkin) #绑定事件
 
         self.cacheWidget(controlDisplayFrame,"skinControlFrame","controlDisplayFrame",cnf=self.packCnf(tk.X,tk.TOP,tk.N))
         self.cacheWidget(controlDisplayLabel,"controlDisplayFrame","controlDisplayLabel",cnf=self.packCnf(tk.NONE,tk.TOP,tk.N))
         self.cacheWidget(controlDisplayText,"controlDisplayFrame","controlDisplayText",cnf=self.packCnf(tk.X,tk.TOP,tk.CENTER))
+        self.cacheWidget(controlSelectFrame,"skinControlFrame","controlSelectFrame",cnf=self.packCnf(tk.X,tk.TOP,tk.NW))
+        self.cacheWidget(controlSelectLabel,"controlSelectFrame","controlSelectLabel",cnf=self.packCnf(tk.NONE,tk.TOP,tk.W))
+        self.cacheWidget(controlSelectText,"controlSelectFrame","controlSelectText",cnf=self.packCnf(tk.X,tk.TOP,tk.W))
+        self.cacheWidget(controlReplaceBtn,"controlSelectFrame","controlReplaceBtn",cnf=self.packCnf(tk.X,tk.TOP,tk.W))
+        self.cacheWidget(controlCatchBtn,"controlSelectFrame","controlCatchBtn",cnf=self.packCnf(tk.X,tk.TOP,tk.W))
+        self.cacheWidget(controlNowFrame,"skinControlFrame","controlNowFrame",cnf=self.packCnf(tk.X,tk.TOP,tk.NW))
+        self.cacheWidget(controlNowLabel,"controlNowFrame","controlNowLabel",cnf=self.packCnf(tk.NONE,tk.TOP,tk.W))
+        self.cacheWidget(controlNowText,"controlNowFrame","controlNowText",cnf=self.packCnf(tk.X,tk.TOP,tk.W))
+        self.cacheWidget(controlNowDelete,"controlNowFrame","controlNowDelete",cnf=self.packCnf(tk.X,tk.TOP,tk.W))
 
     def updateCanvas(self,canvas:tk.Canvas,frame:tk.Frame,parentKey:str):
         """更新滚动画布控件"""
@@ -171,7 +199,7 @@ class MainFrame:
         """清空内容页及其内容相关缓存"""
         self.sourceController.clearImage("skinList") #清理皮肤缓存
 
-        self.widgetController.clearWidget("skinControlFrame")
+        self.widgetController.destroyWidget("skinControlFrame")
         self.widgetController.clearWidget("contentPageCanvas")
         contentPageCanvas = self.getWidget("contentPageCanvas") #内容画布
         contentPageFrame = tk.Frame(contentPageCanvas,cnf=self.widgetCnf())#重建框架
@@ -181,8 +209,26 @@ class MainFrame:
         contentPageFrame.bind(Event.MouseWheel,utils.eventAdaptor(self.scrollVertical,widget=contentPageCanvas))#绑定事件
 
         self.cacheWidget(contentPageFrame,"contentPageCanvas","contentPageFrame",None) #缓存
+        self.widgetController.repackWidget(["contentPageCanvas","contentPageScroll"]) #重新布局
 
 #######################控件事件################################
+    def clickUpdateConfig(self,event,btn: tk.Button):
+        """点击更新Config并写入本地"""
+        self.config.writeToFile()
+        btn.config(text="更新成功", fg=self.config.getColorSuccess())
+        self.cacheThread(threading.Thread(target=self.replaceText,args=(btn, "更新"),daemon=True),"button")
+
+    def clickSelectModsPath(self,event):
+        """选择Mods路径"""
+        filePath = askdirectory()
+        modSourceLabel = self.getWidget("modSourceLabel")
+        if not utils.isEmpty(filePath) and utils.isWidget(modSourceLabel, tk.Label):
+            modSourceLabel.config(text=filePath)
+            self.config.setModsPath(filePath)
+            if self.isSkinListPage():
+                #更新皮肤列表页面，只影响到皮肤控件面板
+                self.cacheThread(threading.Thread(target=self.loadSkinListPage,args=(self.selectRoleKey,),daemon=True),"content")
+
     def clickSelectSkinPath(self, event):
         """选择皮肤库路径"""
         filePath = askdirectory()
@@ -190,7 +236,49 @@ class MainFrame:
         if not utils.isEmpty(filePath) and utils.isWidget(skinSourceLabel, tk.Label):
             skinSourceLabel.config(text=filePath)
             self.config.setSkinPath(filePath)
-            self.cacheThread(threading.Thread(target=self.loadRoleListContent,daemon=True),"content")
+            if self.isRoleListPage():
+                #更新角色列表页面
+                self.cacheThread(threading.Thread(target=self.loadRoleListContent,daemon=True),"content")
+            elif self.isSkinListPage():
+                #更新皮肤列表页面
+                self.cacheThread(threading.Thread(target=self.loadSkinListPage,args=(self.selectRoleKey,),daemon=True),"content")
+
+    def clickSelectSkin(self,event,skinPath:str):
+        """点击选择皮肤"""
+        controlSelectText = self.getWidget("controlSelectText")
+        controlSelectText.config(text=skinPath)
+
+    def clickReplaceSkin(self,event):
+        """点击替换皮肤"""
+        controlReplaceBtn = self.getWidget("controlReplaceBtn")
+        controlSelectText = self.getWidget("controlSelectText")
+        if not utils.isWidget(controlReplaceBtn, tk.Button) or not utils.isWidget(
+            controlSelectText, tk.Label
+        ):
+            return
+        if controlReplaceBtn != None and controlReplaceBtn["text"] == "替换":
+            pathName = controlSelectText["text"]
+            if utils.isEmpty(pathName):
+                controlReplaceBtn.config(text="替换(未选择皮肤)", fg=self.config.getColorFail())
+                self.cacheThread(threading.Thread(target=self.replaceText, args=(controlReplaceBtn, "替换"), daemon=True),"button")
+                return
+            modsPath = self.config.getModsPath()
+            if utils.isEmpty(modsPath) or modsPath == "请选择3dmigoto Mods文件夹":
+                controlReplaceBtn.config(text="替换(未选择Mods文件夹)", fg=self.config.getColorFail())
+                self.cacheThread(threading.Thread(
+                    target=self.replaceText, args=(controlReplaceBtn, "替换"), daemon=True
+                ),"button")
+                return
+            if not os.path.exists(modsPath):
+                controlReplaceBtn.config(text="替换(Mods文件夹不存在)", fg=self.config.getColorFail())
+                self.cacheThread(threading.Thread(
+                    target=self.replaceText, args=(controlReplaceBtn, "替换"), daemon=True
+                ),"button")
+                return
+            controlReplaceBtn.config(text="替换中......")
+            self.cacheThread(threading.Thread(
+                target=self.replaceSkin, args=(modsPath, pathName), daemon=False
+            ),"button")
 
     def clickSelectRole(self,event,key:str):
         """点击角色"""
@@ -202,7 +290,40 @@ class MainFrame:
         """画布上下滚动事件"""
         widget.yview_scroll(-1 * (event.delta // 5), tk.UNITS)
 
+    def replaceText(self, btn: tk.Button, text: str):
+        """替换按钮文本"""
+        sleep(2)
+        btn.config(text=text, fg=self.config.getColorDefault())
+
+    def replaceSkin(self, modsPath: str, pathName: str) -> bool:
+        """替换皮肤"""
+        modRolePath = os.path.join(modsPath, self.selectRoleKey)  # mods角色路径
+        if os.path.exists(modRolePath):
+            shutil.rmtree(modRolePath)  # 清空当前角色正当使用的mod
+        modFileDir = os.path.join(modRolePath, pathName)  # 创建目标文件夹
+        rolePath = os.path.join(self.config.getSkinPath(), self.selectRoleKey)
+        skinPath = os.path.join(rolePath, pathName)
+        replaceBtn = self.getWidget("controlReplaceBtn")
+        if utils.isWidget(replaceBtn, tk.Button) and os.path.exists(skinPath):
+            shutil.copytree(skinPath, modFileDir)
+            replaceBtn.config(text="替换成功！！", fg=self.config.getColorSuccess())
+            self.cacheThread(threading.Thread(target=self.replaceText, args=(replaceBtn, "替换"), daemon=True),"button")
+            modUseRoleText = self.getWidgetFromPool("modsUseText")  # mods正在使用角色
+            if utils.isWidget(modUseRoleText, tk.Label):
+                modUseRoleText.config(text=self.getModsUseSkinText(self.selectRoleKey))
+        else:
+            replaceBtn.config(text="替换失败(未知原因)", fg=self.config.getColorFail())
+            self.cacheThread(threading.Thread(target=self.replaceText, args=(replaceBtn, "替换"), daemon=True),"button")
+
 #######################基础方法################################
+
+    def isSkinListPage(self)->bool:
+        """当前页面是否是皮肤选择界面"""
+        return self.nowPage=="skinList"
+
+    def isRoleListPage(self)->bool:
+        """当前页面是否停留在角色选择页面"""
+        return self.nowPage=="roleList"
 
     def cacheThread(self,thread:threading.Thread,key:str):
         """缓存线程"""

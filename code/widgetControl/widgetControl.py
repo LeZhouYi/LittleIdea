@@ -55,6 +55,17 @@ class WidgetController():
             keyStack.extend(self.__popChilds(keyItem))
             self.__destroyWidget(keyItem) #销毁当前控件
 
+    def destroyWidget(self,key:str)->None:
+        """清理该控件及其子控件"""
+        if key not in self.widgetPool or key not in self.relations:
+            return #已清除
+        keyStack = self.__popChilds(key) #关键字栈
+        while(len(keyStack)>0):
+            keyItem = keyStack.pop()
+            keyStack.extend(self.__popChilds(keyItem))
+            self.__destroyWidget(keyItem) #销毁当前控件
+        self.__destroyWidget(key)
+
     def __destroyWidget(self,key:str):
         """执行控件destory"""
         if key not in self.relations:
