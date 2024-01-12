@@ -25,7 +25,6 @@ def centerWindow(window:tk.Tk,width:int,height:int):
     """
     maxWindowWidth,maxWindowHeight = window.winfo_screenwidth(),window.winfo_screenheight()
     centerWindowSize = f"{width}x{height}+{round((maxWindowWidth-width)/2)}+{round((maxWindowHeight-height)/2)}"
-    print(centerWindowSize)
     window.geometry(centerWindowSize)
 
 def eventAdaptor(fun, **kwds):
@@ -60,7 +59,7 @@ def isWidget(widget: tk.Widget, widgetClass):
 
 def isPathExist(path:str)->bool:
     """判断路径是否存在"""
-    return isNotEmpty(path) and os.path.exists(path)
+    return isNotEmpty(path) and os.path.exists(path) and os.path.isdir(path)
 
 def createDir(path:str):
     """创建文件夹"""

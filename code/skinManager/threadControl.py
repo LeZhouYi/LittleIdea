@@ -11,6 +11,9 @@ class ThreadController:
 
     def cacheThread(self,thread:threading.Thread,key:str)->None:
         """缓存线程池并开始运行"""
+        if key ==None:
+            thread.start()
+            return
         if key in self.threadPool:
             threadNow = self.threadPool[key]
             utils.stopThread(threadNow)

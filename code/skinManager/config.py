@@ -2,8 +2,8 @@ import json
 import os
 import random
 import math
-from data import FrameConfig
 
+dataFile = "data.json"  # 默认数据储存位置
 
 class Config:
     def __init__(self):
@@ -24,7 +24,7 @@ class Config:
     def loadByFile(self):
         """从文件中读取数据"""
         jsonData = None
-        file = os.path.join(os.getcwd(), FrameConfig.dataFile)
+        file = os.path.join(os.getcwd(), dataFile)
         if os.path.exists(file):
             with open(file, encoding="utf-8") as f:
                 jsonData = json.load(f)
@@ -47,6 +47,7 @@ class Config:
             self.colorSuccess = jsonData["colorSuccess"]
             self.colorDefault = jsonData["colorDefault"]
             self.colorFail = jsonData["colorFail"]
+            self.tempDir = jsonData["tempDir"]
 
     def writeToFile(self):
         """将当前数据写到文件"""
@@ -68,9 +69,10 @@ class Config:
             "windowHeight":self.windowHeight,
             "colorSuccess":self.colorSuccess,
             "colorDefault":self.colorDefault,
-            "colorFail": self.colorFail
+            "colorFail": self.colorFail,
+            "tempDir": self.tempDir
         }
-        file = os.path.join(os.getcwd(), FrameConfig.dataFile)
+        file = os.path.join(os.getcwd(), dataFile)
         if os.path.exists(file):
             with open(file, encoding="utf-8", mode="w") as f:
                 f.write(json.dumps(jsonData))
@@ -152,3 +154,16 @@ class Config:
     def getColorFail(self)->str:
         """操作失败字体颜色"""
         return self.colorFail
+
+    def getTempDir(self)->str:
+        """获取临时存储文件位置"""
+        return self.tempDir
+
+    def getSkinColoumMax(self,columnWidth:int)->int:
+        """返回一行最多显示皮肤数"""
+        return (columnWidth-self.skinControlWidth)//(self.roleSkinSize[0]+3)
+
+    def getSkinBorder(self,columnWidth:int,cloumnMax:int)->int:
+        """返回皮肤控件的border"""
+        border = (columnWidth-self.skinControlWidth-(self.roleSkinSize[0])*cloumnMax)/cloumnMax/5
+        return max(0,math.floor(border))
