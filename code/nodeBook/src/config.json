@@ -1,4 +1,11 @@
 {
-    "windowSize": [1000,800],
+    "windowSize": [
+        1236,
+        884
+    ],
+    "windowPosition": [
+        2235,
+        108
+    ],
     "windowTitle": "小笔记@Skily_Leyu"
 }
