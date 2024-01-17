@@ -4,8 +4,10 @@
         884
     ],
     "windowPosition": [
-        2235,
-        108
+        2181,
+        208
     ],
-    "windowTitle": "小笔记@Skily_Leyu"
+    "windowTitle": "小笔记@Skily_Leyu",
+    "stylePath": "src/style.json",
+    "passwordBookPath": "src/password_book.json"
 }

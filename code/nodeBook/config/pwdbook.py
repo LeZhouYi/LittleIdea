@@ -1,12 +1,11 @@
 import os
 import json
 
-"""控件相关个性配置"""
-class Style:
+class PwdBook:
 
     def __init__(self,filePath:str) -> None:
         self.filePath = filePath #本地配置文件路径
-        self.cnfs = {} #样式数据集
+        self.data = {} #样式数据集
         self.loadByFile()
 
     def loadByFile(self) -> None:
@@ -19,14 +18,9 @@ class Style:
         if jsonData != None:
             self.cnfs = jsonData
 
-    def getCnf(self,key:str)->dict:
-        """获取控件配置"""
-        if key in self.cnfs:
-            return self.cnfs[key]["cnf"]
-        return {}
+    def getGroupKeys(self)->list[str]:
+        """获取组的键集"""
+        return list(self.data.keys())
 
-    def getPackCnf(self,key:str)->dict:
-        """获取控件布局配置"""
-        if key in self.cnfs:
-            return self.cnfs[key]["packCnf"]
-        return None
+    def getGroup(self,groupKey:str)->dict:
+        """获取组"""

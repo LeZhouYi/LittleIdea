@@ -2,7 +2,6 @@ import json
 import os
 
 dataFile = "src/config.json"  # 默认数据储存位置
-configKeys = ["windowSize", "windowPosition", "windowTitle"]
 
 """配置文件相关，读取/写配置文件"""
 class Config:
@@ -18,8 +17,7 @@ class Config:
             with open(file, encoding="utf-8") as f:
                 jsonData = json.load(f)
         if jsonData != None:
-            for key in configKeys:
-                self.data[key] = jsonData[key]
+            self.data = jsonData
 
     def writeToFile(self) -> None:
         """将当前数据写到文件"""
@@ -47,3 +45,11 @@ class Config:
     def getTitle(self) -> str:
         """获取窗口标题"""
         return str(self.data["windowTitle"])
+
+    def getStylePath(self)->str:
+        """获取样式配置路径"""
+        return str(self.data["stylePath"])
+
+    def getPwdBook(self)->str:
+        """获取密码本路径"""
+        return str(self.data["passwordBookPath"])

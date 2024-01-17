@@ -1,0 +1,66 @@
+{
+    "sideBarFrame":{
+        "cnf":{
+            "background": "white"
+        },
+        "packCnf":{
+            "fill": "y",
+            "side": "left",
+            "anchor": "n"
+        }
+    },
+    "contentFrame":{
+        "cnf":{
+            "background": "white"
+        },
+        "packCnf":{
+            "fill": "both",
+            "side": "left",
+            "anchor": "nw",
+            "expand": 1
+        }
+    },
+    "passwordBookBtn":{
+        "cnf":{
+            "text": "密码本",
+            "width": 15,
+            "height": 2,
+            "border": 4,
+            "background": "white",
+            "font": ["微软雅黑", 12]
+        },
+        "packCnf":{
+            "fill": "x",
+            "side": "top",
+            "anchor": "center"
+        }
+    },
+    "pwdDispalyFrame":{
+        "cnf":{
+            "background": "white"
+        },
+        "packCnf":{
+            "fill": "both",
+            "side": "left",
+            "anchor": "nw",
+            "expand": 1
+        }
+    },
+    "pwdScrollCanvas":{
+        "cnf":{
+            "background": "white"
+        },
+        "packCnf":{
+            "fill": "both",
+            "side": "left",
+            "anchor": "nw",
+            "expand": 1
+        }
+    },
+    "pwdContentFrame":{
+        "cnf":{
+            "background": "white"
+        },
+        "packCnf": null
+    }
+}
