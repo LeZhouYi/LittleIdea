@@ -21,12 +21,16 @@ class Style:
 
     def getCnf(self,key:str)->dict:
         """获取控件配置"""
+        if str(key).find("_")>=0:
+            key = key.split("_")[0]
         if key in self.cnfs:
             return self.cnfs[key]["cnf"]
         return {}
 
     def getPackCnf(self,key:str)->dict:
         """获取控件布局配置"""
+        if str(key).find("_")>=0:
+            key = key.split("_")[0]
         if key in self.cnfs:
             return self.cnfs[key]["packCnf"]
         return None

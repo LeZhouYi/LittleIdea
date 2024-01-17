@@ -1,13 +1,16 @@
 {
     "windowSize": [
-        1236,
-        884
+        970,
+        726
     ],
     "windowPosition": [
-        2181,
-        208
+        -1291,
+        102
     ],
     "windowTitle": "小笔记@Skily_Leyu",
     "stylePath": "src/style.json",
-    "passwordBookPath": "src/password_book.json"
+    "passwordBookPath": "src/password_book.json",
+    "pagePath": "src/page.json",
+    "nowPage": "passwordDisplay",
+    "sideBarWidth": 160
 }

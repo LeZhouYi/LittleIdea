@@ -24,8 +24,8 @@
         "cnf":{
             "text": "密码本",
             "width": 15,
-            "height": 2,
-            "border": 4,
+            "height": 1,
+            "border": 0,
             "background": "white",
             "font": ["微软雅黑", 12]
         },
@@ -59,8 +59,73 @@
     },
     "pwdContentFrame":{
         "cnf":{
-            "background": "white"
+            "background": "black"
         },
         "packCnf": null
+    },
+    "pwdSingleFrame":{
+        "cnf":{
+            "background": "white"
+        },
+        "packCnf":{
+            "fill": "x",
+            "side": "top",
+            "anchor": "nw"
+        }
+    },
+    "pwdGroupLabel":{
+        "cnf":{
+            "background": "pink",
+            "font": ["微软雅黑", 12],
+            "anchor": "w"
+        },
+        "packCnf":{
+            "fill": "x",
+            "side": "top",
+            "anchor": "nw",
+            "padx": 3,
+            "pady": 2
+        }
+    },
+    "pwdEnvFrame":{
+        "cnf":{
+            "background": "white"
+        },
+        "packCnf":{
+            "fill": "x",
+            "side": "top",
+            "anchor": "nw",
+            "padx": 1,
+            "pady": 1
+        }
+    },
+    "pwdEmptyLabel":{
+        "cnf":{
+            "background": "white",
+            "font": ["微软雅黑", 12],
+            "anchor": "w",
+            "width": 3
+        },
+        "packCnf":{
+            "fill": "none",
+            "side": "left",
+            "anchor": "nw",
+            "padx": 1,
+            "pady": 1
+        }
+    },
+    "pwdEnvLabel":{
+        "cnf":{
+            "background": "pink",
+            "font": ["微软雅黑", 12],
+            "anchor": "w"
+        },
+        "packCnf":{
+            "fill": "x",
+            "side": "top",
+            "anchor": "nw",
+            "padx": 1,
+            "pady": 1
+        }
     }
 }

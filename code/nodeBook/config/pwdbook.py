@@ -16,7 +16,7 @@ class PwdBook:
             with open(file, encoding="utf-8") as f:
                 jsonData = json.load(f)
         if jsonData != None:
-            self.cnfs = jsonData
+            self.data = jsonData
 
     def getGroupKeys(self)->list[str]:
         """获取组的键集"""
@@ -24,3 +24,6 @@ class PwdBook:
 
     def getGroup(self,groupKey:str)->dict:
         """获取组"""
+        if groupKey in self.data:
+            return self.data[groupKey]
+        return {}

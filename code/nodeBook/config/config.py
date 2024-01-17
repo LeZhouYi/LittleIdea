@@ -53,3 +53,23 @@ class Config:
     def getPwdBook(self)->str:
         """获取密码本路径"""
         return str(self.data["passwordBookPath"])
+
+    def getContentPageWidth(self)->str:
+        """获取当前内容页显示的宽度"""
+        return self.data["windowSize"][0]-self.data["sideBarWidth"]
+
+    def hasWindowResize(self,width:int,height:int)->int:
+        """判断窗体是否已变化大小"""
+        return self.data["windowSize"][0]!=width or self.data["windowSize"][1]!= height
+
+    def getPagePath(self)->str:
+        """获取页面数据路径"""
+        return self.data["pagePath"]
+
+    def getNowPage(self)->str:
+        """获取当前页面"""
+        return self.data["nowPage"]
+
+    def setNowPage(self,nowPage:str)->None:
+        """记录当前页面"""
+        self.data["nowPage"]=nowPage
