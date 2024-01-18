@@ -136,16 +136,15 @@
     "pwdDataFrame":{
         "cnf":{
             "background": "white",
-            "borderwidth": 5,
-            "highlightthickness": 1,
-            "highlightbackground": "brown"
+            "borderwidth": 2,
+            "relief":"solid"
         },
         "packCnf":{
             "fill": "x",
             "side": "top",
             "anchor": "nw",
             "padx": 1,
-            "pady": 1
+            "pady": 3
         }
     },
     "pwdItemFrame":{
@@ -216,6 +215,32 @@
             "fill": "y",
             "side": "right",
             "anchor": "e"
+        }
+    },
+    "pwdGroupPackBtn":{
+        "cnf":{
+            "background": "#ADD8E6",
+            "font": ["微软雅黑", 16],
+            "fg": "white",
+            "anchor": "center",
+            "width": 3
+        },
+        "packCnf":{
+            "fill": "none",
+            "side": "right",
+            "anchor": "center",
+            "padx": 1,
+            "pady": 1
+        }
+    },
+    "pwdGroupLine":{
+        "cnf":{
+            "background": "#ADD8E6"
+        },
+        "packCnf":{
+            "fill": "x",
+            "side": "top",
+            "anchor": "nw"
         }
     }
 }

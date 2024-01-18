@@ -37,16 +37,22 @@ class PwdBookFrame(BaseFrame):
         frameCount = 0
         for groupKey in self.passwordBook.getGroupKeys():
             pwdSingleFrameKey = utils.createKey("pwdSingleFrame",frameCount)
+            pwdGroupLineKey = utils.createKey("pwdGroupLine",frameCount)
             pwdGroupLabelKey = utils.createKey("pwdGroupLabel",frameCount)
+            pwdGroupPackBtnKey = utils.createKey("pwdGroupPackBtn",frameCount)
 
             pwdSingleFrame = tk.Frame(
                 pwdContentFrame, cnf=self.getCnf(pwdSingleFrameKey)
             )
+            pwdGroupLineFrame = tk.Frame(pwdSingleFrame,cnf=self.getCnf(pwdGroupLineKey))
             pwdGroupLabel = tk.Label(
-                pwdSingleFrame, text=groupKey, cnf=self.getCnf(pwdGroupLabelKey)
+                pwdGroupLineFrame, text=groupKey, cnf=self.getCnf(pwdGroupLabelKey)
             )
+            pwdGroupPackBtn = tk.Label(pwdGroupLineFrame,text="^",cnf=self.getCnf(pwdGroupPackBtnKey))
             self.cacheWidget(pwdSingleFrame, "pwdContentFrame", pwdSingleFrameKey)
-            self.cacheWidget(pwdGroupLabel, "pwdContentFrame", pwdGroupLabelKey)
+            self.cacheWidget(pwdGroupLineFrame,pwdSingleFrameKey,pwdGroupLineKey)
+            self.cacheWidget(pwdGroupPackBtn,pwdGroupLineKey,pwdGroupPackBtnKey)
+            self.cacheWidget(pwdGroupLabel, pwdGroupLineKey, pwdGroupLabelKey)
 
             group = self.passwordBook.getGroup(groupKey)
             envconut = 0
@@ -94,10 +100,7 @@ class PwdBookFrame(BaseFrame):
                                 pwdItemValue.insert(tk.END,pwdValue)
                                 pwdItemValue.config(state="readonly")
                                 self.cacheWidget(pwdItemValue,pwdItemFrameKey,pwdItemValueKey)
-
-
                         pwdKeyCount+=1
-
                     pwdCount+=1
                 envconut+=1
             frameCount += 1
