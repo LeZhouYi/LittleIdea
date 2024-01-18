@@ -60,7 +60,7 @@ class Config:
 
     def hasWindowResize(self,width:int,height:int)->int:
         """判断窗体是否已变化大小"""
-        return self.data["windowSize"][0]!=width or self.data["windowSize"][1]!= height
+        return abs(self.data["windowSize"][0]-width)>40 or abs(self.data["windowSize"][1]- height)>40
 
     def getPagePath(self)->str:
         """获取页面数据路径"""
@@ -73,3 +73,7 @@ class Config:
     def setNowPage(self,nowPage:str)->None:
         """记录当前页面"""
         self.data["nowPage"]=nowPage
+
+    def getSideBarWidth(self)->int:
+        """返回SideBar的宽度"""
+        return self.data["sideBarWidth"]

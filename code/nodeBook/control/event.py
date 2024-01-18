@@ -4,5 +4,6 @@ class WmEvent:
 
 class Event:
     MouseLeftClick = "<Button-1>"
+    MouseWheel = "<MouseWheel>"  # 滚轮滚动
 
     WindowResize = "<Configure>"
