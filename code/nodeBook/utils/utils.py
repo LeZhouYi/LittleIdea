@@ -8,3 +8,18 @@ def createKey(key:str,*args)->str:
 def isEmpty(value:str)->bool:
     """判断字符串是否为空"""
     return value==None or value=="" or value==[]
+
+def isPhoto(fileName:str)->bool:
+    """判断当前文件为图片"""
+    return fileName.endswith(".png") or fileName.endswith(".PNG") or fileName.endswith(".jpg")
+
+def getFileName(file:str)->str:
+    """去掉文件后缀，获取文件名"""
+    return file.split(".")[0]
+
+def eventAdaptor(fun, **kwds):
+    """
+    fun:当前要绑定的方法
+    kwds:要传入的额外参数，需带参数名(eg. sudoku=sudoku)
+    """
+    return lambda event, fun=fun, kwds=kwds: fun(event, **kwds)

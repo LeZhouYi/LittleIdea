@@ -31,6 +31,6 @@ class Style:
         """获取控件布局配置"""
         if str(key).find("_")>=0:
             key = key.split("_")[0]
-        if key in self.cnfs:
+        if key in self.cnfs and "packCnf" in self.cnfs[key]:
             return self.cnfs[key]["packCnf"]
         return None

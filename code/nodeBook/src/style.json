@@ -27,9 +27,7 @@
             "height": 2,
             "background": "#ADD8E6",
             "font": ["微软雅黑", 15],
-            "fg": "white",
-            "highlightthickness": 2,
-            "highlightbackground": "white"
+            "fg": "white"
         },
         "packCnf":{
             "fill": "x",
@@ -50,18 +48,19 @@
     },
     "pwdScrollCanvas":{
         "cnf":{
-            "background": "white"
+            "background": "white",
+            "highlightthickness":0,
+            "borderwidth":2
         },
         "packCnf":{
-            "fill": "both",
+            "fill": "none",
             "side": "left",
-            "anchor": "nw",
-            "expand": 1
+            "anchor": "nw"
         }
     },
     "pwdContentFrame":{
         "cnf":{
-            "background": "black"
+            "background": "white"
         },
         "packCnf": null
     },
@@ -121,7 +120,7 @@
     "pwdEnvLabel":{
         "cnf":{
             "background": "#ADD8E6",
-            "font": ["微软雅黑", 16],
+            "font": ["微软雅黑", 18],
             "fg": "white",
             "anchor": "w"
         },
@@ -129,7 +128,6 @@
             "fill": "x",
             "side": "top",
             "anchor": "nw",
-            "padx": 1,
             "pady": 1
         }
     },
@@ -222,15 +220,14 @@
             "background": "#ADD8E6",
             "font": ["微软雅黑", 16],
             "fg": "white",
-            "anchor": "center",
-            "width": 3
+            "anchor": "center"
         },
         "packCnf":{
             "fill": "none",
             "side": "right",
             "anchor": "center",
             "padx": 1,
-            "pady": 1
+            "pady": 5
         }
     },
     "pwdGroupLine":{
@@ -241,6 +238,227 @@
             "fill": "x",
             "side": "top",
             "anchor": "nw"
+        }
+    },
+    "pwdGroupAddBtn":{
+        "cnf":{
+            "background": "#ADD8E6",
+            "font": ["微软雅黑", 16],
+            "fg": "white",
+            "anchor": "center"
+        },
+        "packCnf":{
+            "fill": "none",
+            "side": "right",
+            "anchor": "center",
+            "padx": 5,
+            "pady": 1
+        }
+    },
+    "pwdGroupEditBtn":{
+        "cnf":{
+            "background": "#ADD8E6",
+            "font": ["微软雅黑", 16],
+            "fg": "white",
+            "anchor": "center"
+        },
+        "packCnf":{
+            "fill": "none",
+            "side": "right",
+            "anchor": "center",
+            "padx": 5,
+            "pady": 1
+        }
+    },
+    "pwdGroupDelBtn":{
+        "cnf":{
+            "background": "#ADD8E6",
+            "font": ["微软雅黑", 16],
+            "fg": "white",
+            "anchor": "center"
+        },
+        "packCnf":{
+            "fill": "none",
+            "side": "right",
+            "anchor": "center",
+            "padx": 5,
+            "pady": 1
+        }
+    },
+    "pwdEnvPackBtn":{
+        "cnf":{
+            "background": "#ADD8E6",
+            "font": ["微软雅黑", 18],
+            "fg": "white",
+            "anchor": "center",
+            "height":23
+        },
+        "packCnf":{
+            "fill": "none",
+            "side": "right",
+            "anchor": "center"
+        }
+    },
+    "pwdEnvLineFrame":{
+        "cnf":{
+            "background": "white"
+        },
+        "packCnf":{
+            "fill": "x",
+            "side": "top",
+            "anchor": "nw"
+        }
+    },
+    "pwdEnvAddBtn":{
+        "cnf":{
+            "background": "#ADD8E6",
+            "font": ["微软雅黑", 18],
+            "fg": "white",
+            "anchor": "center",
+            "height":23,
+            "width": 25
+        },
+        "packCnf":{
+            "fill": "none",
+            "side": "right",
+            "anchor": "center"
+        }
+    },
+    "pwdEnvEditBtn":{
+        "cnf":{
+            "background": "#ADD8E6",
+            "font": ["微软雅黑", 18],
+            "fg": "white",
+            "anchor": "center",
+            "height":23,
+            "width": 25
+        },
+        "packCnf":{
+            "fill": "none",
+            "side": "right",
+            "anchor": "center"
+        }
+    },
+    "pwdEnvDelBtn":{
+        "cnf":{
+            "background": "#ADD8E6",
+            "font": ["微软雅黑", 18],
+            "fg": "white",
+            "anchor": "center",
+            "height":23,
+            "width": 25
+        },
+        "packCnf":{
+            "fill": "none",
+            "side": "right",
+            "anchor": "center"
+        }
+    },
+    "pwdItemCopyBtn":{
+        "cnf":{
+            "background": "#ADD8E6",
+            "font": ["微软雅黑", 16],
+            "fg": "white",
+            "anchor": "center"
+        },
+        "packCnf":{
+            "fill": "none",
+            "side": "right",
+            "anchor": "center",
+            "padx": 5,
+            "pady": 1
+        }
+    },
+    "pwdValueEditBtn":{
+        "cnf":{
+            "background": "#ADD8E6",
+            "font": ["微软雅黑", 16],
+            "fg": "white",
+            "anchor": "center"
+        },
+        "packCnf":{
+            "fill": "none",
+            "side": "right",
+            "anchor": "center",
+            "padx": 5,
+            "pady": 1
+        }
+    },
+    "pwdValueDelBtn":{
+        "cnf":{
+            "background": "#ADD8E6",
+            "font": ["微软雅黑", 16],
+            "fg": "white",
+            "anchor": "center"
+        },
+        "packCnf":{
+            "fill": "none",
+            "side": "right",
+            "anchor": "center",
+            "padx": 5,
+            "pady": 1
+        }
+    },
+    "pwdDeleteDialog":{
+        "cnf":{
+            "background": "#ADD8E6",
+            "height": 252,
+            "width": 164
+        }
+    },
+    "pwdDelDlgFrame":{
+        "cnf":{
+            "background": "white",
+            "borderwidth": 40
+        },
+        "packCnf":{
+            "fill": "none",
+            "side": null,
+            "anchor": "center"
+        }
+    },
+    "pwdDelDlgLabel":{
+        "cnf":{
+            "background": "white",
+            "font": ["微软雅黑", 16],
+            "fg": "#1B5765",
+            "anchor": "center",
+            "height": 2
+        },
+        "packCnf":{
+            "fill": "none",
+            "side": "top",
+            "anchor": "center"
+        }
+    },
+    "pwdDelDlgYesBtn":{
+        "cnf":{
+            "background": "white",
+            "font": ["微软雅黑", 16],
+            "fg": "#1B5765",
+            "anchor": "w",
+            "width": 8,
+            "height": 2
+        },
+        "packCnf":{
+            "fill": "none",
+            "side": "left",
+            "anchor": "w"
+        }
+    },
+    "pwdDelDlgNoBtn":{
+        "cnf":{
+            "background": "white",
+            "font": ["微软雅黑", 16],
+            "fg": "#1B5765",
+            "anchor": "e",
+            "width": 8,
+            "height": 2
+        },
+        "packCnf":{
+            "fill": "none",
+            "side": "right",
+            "anchor": "e"
         }
     }
 }
