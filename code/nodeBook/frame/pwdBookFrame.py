@@ -1,5 +1,7 @@
 import os
+import pyperclip
 import tkinter as tk
+from tkinter import messagebox
 from PIL import Image, ImageTk
 from utils import utils
 from config.pwdbook import PwdBook
@@ -17,14 +19,17 @@ class PwdBookFrame(BaseFrame):
         self.loadIcon()
         self.checkPwdData()
 
-    def loadIcon(self):
+    def loadIcon(self) -> None:
         """加载图片资源"""
         iconPaths = os.path.join(os.getcwd(), self.getConfig().getPwdIconPath())
+        # 遍历目标路径所有图片
         for fileName in os.listdir(iconPaths):
             if utils.isPhoto(fileName):
+                # 加载图片并调整为适合尺寸
                 iconfile = os.path.join(iconPaths, fileName)
                 image = Image.open(iconfile).resize(self.getConfig().getpwdIconSize())
                 image = ImageTk.PhotoImage(image)
+                # 缓存
                 self.cacheImage(image, utils.getFileName(fileName), "pwdbookIcon")
 
     def checkPwdData(self) -> None:
@@ -32,36 +37,50 @@ class PwdBookFrame(BaseFrame):
         if len(self.passwordBook.getGroupKeys()) == 0:
             self.passwordBook.addGroup("default")
 
+    def updatePwdPage(self) -> None:
+        """更新当前页面"""
+        self.updateCanvas(
+            self.getWidget("pwdScrollCanvas"),
+            self.getWidget("pwdContentFrame"),
+            "pwdDispalyFrame",
+        )
+
     ###########控件事件################
-    def clickDeleteGroup(self, event, eventInfo: dict):
+    def clickDeleteGroup(self, event, eventInfo: dict) -> None:
         """点击删除组事件"""
         self.passwordBook.deletetGroup(eventInfo["groupKey"])
         self.passwordBook.writeToFile()
         self.destroyWidget(eventInfo["widget"])
         self.closeDialog(event, eventInfo["dialogKey"])
+        self.updatePwdPage()
 
-        self.updateCanvas(
-            self.getWidget("pwdScrollCanvas"),
-            self.getWidget("pwdContentFrame"),
-            "pwdDispalyFrame",
-        )
-
-    def clickDeleteEnv(self, event, eventInfo: dict):
+    def clickDeleteEnv(self, event, eventInfo: dict) -> None:
         """点击删除环境事件"""
         self.passwordBook.deletetEnv(eventInfo["groupKey"], eventInfo["envKey"])
         self.passwordBook.writeToFile()
         self.destroyWidget(eventInfo["widget"])
         self.closeDialog(event, eventInfo["dialogKey"])
+        self.updatePwdPage()
 
-        self.updateCanvas(
-            self.getWidget("pwdScrollCanvas"),
-            self.getWidget("pwdContentFrame"),
-            "pwdDispalyFrame",
+    def clickDeletePwdData(self, event, eventInfo: dict) -> None:
+        """点击删除密码数据"""
+        self.passwordBook.deleteData(
+            eventInfo["groupKey"], eventInfo["envKey"], eventInfo["id"]
         )
+        self.passwordBook.writeToFile()
+        self.destroyWidget(eventInfo["widget"])
+        self.closeDialog(event, eventInfo["dialogKey"])
+        self.updatePwdPage()
 
-    def closeDialog(self, event, dialogKey: str):
+    def closeDialog(self, event, dialogKey: str) -> None:
         """关闭提示框事件"""
         self.destroyWidget(dialogKey)
+
+    def clickCopy(self,event, text:str)->None:
+        """点击复制文本到剪切板"""
+        pyperclip.copy(text)
+        mainWindow = self.getWidget("baseWindow")
+        messagebox.showinfo("test","asdfsfsdf")
 
     ###########渲染相关################
     def loadDeleteDialog(
@@ -73,9 +92,11 @@ class PwdBookFrame(BaseFrame):
         mainWindow = self.getWidget("baseWindow")
         pwdDeleteDialog = tk.Toplevel(mainWindow, cnf=self.getCnf("pwdDeleteDialog"))
         pwdDeleteDialog.title("")
+        #禁用主窗口操作
         mainWindow.update_idletasks()
         pwdDeleteDialog.transient(mainWindow)
         pwdDeleteDialog.grab_set()
+        #计算并使提示框显示居中
         winX = (
             mainWindow.winfo_rootx()
             + (mainWindow.winfo_width() // 2)
@@ -125,28 +146,41 @@ class PwdBookFrame(BaseFrame):
     def loadPasswordNote(self, contentFrameKey: str) -> None:
         """加载密码本页面"""
         contentFrame = self.getWidget(contentFrameKey)
+        # 构造基础框架
         pwdDispalyFrame = tk.Frame(contentFrame, cnf=self.getCnf("pwdDispalyFrame"))
         pwdScrollCanvas = tk.Canvas(pwdDispalyFrame, cnf=self.getCnf("pwdScrollCanvas"))
         pwdContentFrame = tk.Frame(pwdScrollCanvas, cnf=self.getCnf("pwdContentFrame"))
         pwdScrollBar = tk.Scrollbar(pwdDispalyFrame, self.getCnf("pwdScrollBar"))
 
+        # 绑定滚动事件
         pwdScrollCanvas.config(yscrollcommand=pwdScrollBar.set, yscrollincrement=5)
         pwdScrollBar.config(command=pwdScrollCanvas.yview)  # 绑定滚动
 
+        # 缓存并Pack
         self.cacheWidget(pwdDispalyFrame, contentFrameKey, "pwdDispalyFrame")
         self.cacheWidget(pwdScrollCanvas, "pwdDispalyFrame", "pwdScrollCanvas")
         self.cacheWidget(pwdContentFrame, "pwdScrollCanvas", "pwdContentFrame")
         self.cacheWidget(pwdScrollBar, "pwdDispalyFrame", "pwdScrollBar")
 
-        frameCount = 0
+        # 加载密码内容
+        self.loadPwdGroupFrame()
+        self.loadPwdEnvFrame()
+        self.loadPwdDataFrame()
+
+        # 加载完成，刷新适应页面
+        self.refreshCanvas()
+
+    def loadPwdGroupFrame(self) -> None:
+        """加载组"""
+        pwdContentFrame = self.getWidget("pwdContentFrame")
         for groupKey in self.passwordBook.getGroupKeys():
-            pwdSingleFrameKey = utils.createKey("pwdSingleFrame", frameCount)
-            pwdGroupLineKey = utils.createKey("pwdGroupLine", frameCount)
-            pwdGroupLabelKey = utils.createKey("pwdGroupLabel", frameCount)
-            pwdGroupPackBtnKey = utils.createKey("pwdGroupPackBtn", frameCount)
-            pwdGroupAddBtnKey = utils.createKey("pwdGroupAddBtn", frameCount)
-            pwdGroupEditBtnKey = utils.createKey("pwdGroupEditBtn", frameCount)
-            pwdGroupDelBtnKey = utils.createKey("pwdGroupDelBtn", frameCount)
+            pwdSingleFrameKey = utils.createKey("pwdSingleFrame", groupKey)
+            pwdGroupLineKey = utils.createKey("pwdGroupLine", groupKey)
+            pwdGroupLabelKey = utils.createKey("pwdGroupLabel", groupKey)
+            pwdGroupPackBtnKey = utils.createKey("pwdGroupBtn", groupKey, "pack")
+            pwdGroupAddBtnKey = utils.createKey("pwdGroupBtn", groupKey, "add")
+            pwdGroupEditBtnKey = utils.createKey("pwdGroupBtn", groupKey, "edit")
+            pwdGroupDelBtnKey = utils.createKey("pwdGroupBtn", groupKey, "del")
 
             pwdSingleFrame = tk.Frame(
                 pwdContentFrame, cnf=self.getCnf(pwdSingleFrameKey)
@@ -198,17 +232,22 @@ class PwdBookFrame(BaseFrame):
             self.cacheWidget(pwdGroupDelBtn, pwdGroupLineKey, pwdGroupDelBtnKey)
             self.cacheWidget(pwdGroupLabel, pwdGroupLineKey, pwdGroupLabelKey)
 
+    def loadPwdEnvFrame(self) -> None:
+        """加载EnvFrame"""
+        for groupKey in self.passwordBook.getGroupKeys():
+            pwdSingleFrameKey = utils.createKey("pwdSingleFrame", groupKey)
+            pwdSingleFrame = self.getWidget(pwdSingleFrameKey)
+
             group = self.passwordBook.getGroup(groupKey)
-            envconut = 0
             for envkey, pwdList in group.items():
-                pwdEnvFrameKey = utils.createKey("pwdEnvFrame", frameCount, envconut)
-                pwdEnvLineKey = utils.createKey("pwdEnvLineFrame", frameCount, envconut)
-                pwdEmptyKey = utils.createKey("pwdEmptyLabel", frameCount, envconut)
-                pwdEnvKey = utils.createKey("pwdEnvLabel", frameCount, envconut)
-                pwdEnvPackKey = utils.createKey("pwdEnvPackBtn", frameCount, envconut)
-                pwdEnvAddKey = utils.createKey("pwdEnvAddBtn", frameCount, envconut)
-                pwdEnvEditKey = utils.createKey("pwdEnvEditBtn", frameCount, envconut)
-                pwdEnvDelKey = utils.createKey("pwdEnvDelBtn", frameCount, envconut)
+                pwdEnvFrameKey = utils.createKey("pwdEnvFrame", groupKey, envkey)
+                pwdEnvLineKey = utils.createKey("pwdEnvLineFrame", groupKey, envkey)
+                pwdEmptyKey = utils.createKey("pwdEmptyLabel", groupKey, envkey)
+                pwdEnvKey = utils.createKey("pwdEnvLabel", groupKey, envkey)
+                pwdEnvPackKey = utils.createKey("pwdEnvBtn", groupKey, envkey, "pack")
+                pwdEnvAddKey = utils.createKey("pwdEnvBtn", groupKey, envkey, "add")
+                pwdEnvEditKey = utils.createKey("pwdEnvBtn", groupKey, envkey, "edit")
+                pwdEnvDelKey = utils.createKey("pwdEnvBtn", groupKey, envkey, "del")
 
                 pwdEnvFrame = tk.Frame(pwdSingleFrame, cnf=self.getCnf(pwdEnvFrameKey))
                 pwdEnvLineFrame = tk.Frame(pwdEnvFrame, cnf=self.getCnf(pwdEnvLineKey))
@@ -259,48 +298,42 @@ class PwdBookFrame(BaseFrame):
                 self.cacheWidget(pwdEnvDelBtn, pwdEnvLineKey, pwdEnvDelKey)
                 self.cacheWidget(pwdEnvLabel, pwdEnvLineKey, pwdEnvKey)
 
-                pwdCount = 0
+    def loadPwdDataFrame(self) -> None:
+        """加载密码内容"""
+        for groupKey in self.passwordBook.getGroupKeys():
+            group = self.passwordBook.getGroup(groupKey)
+            for envkey, pwdList in group.items():
+                pwdEnvFrameKey = utils.createKey("pwdEnvFrame", groupKey, envkey)
+                pwdEnvFrame = self.getWidget(pwdEnvFrameKey)
                 for pwdData in pwdList:
-                    pwdDataFrameKey = utils.createKey(
-                        "pwdDataFrame", frameCount, envconut, pwdCount
-                    )
+                    pwdDataId = pwdData["id"]
+                    pwdDataFrameKey = utils.createKey("pwdDataFrame", pwdDataId)
                     pwdDataFrame = tk.Frame(
                         pwdEnvFrame, cnf=self.getCnf(pwdDataFrameKey)
                     )
                     self.cacheWidget(pwdDataFrame, pwdEnvFrameKey, pwdDataFrameKey)
 
-                    pwdKeyCount = 0
                     for pwdKey, pwdValue in pwdData.items():
                         if (
                             not utils.isEmpty(pwdValue) and pwdKey != "id"
                         ) or pwdKey == "labels":
                             pwdItemFrameKey = utils.createKey(
                                 "pwdItemFrame",
-                                frameCount,
-                                envconut,
-                                pwdCount,
-                                pwdKeyCount,
+                                pwdDataId,
+                                pwdKey,
                             )
                             pwdItemLabelKey = utils.createKey(
                                 "pwdItemLabel",
-                                frameCount,
-                                envconut,
-                                pwdCount,
-                                pwdKeyCount,
+                                pwdDataId,
+                                pwdKey,
                             )
                             pwdItemValueKey = utils.createKey(
                                 "pwdItemValue",
-                                frameCount,
-                                envconut,
-                                pwdCount,
-                                pwdKeyCount,
+                                pwdDataId,
+                                pwdKey,
                             )
                             pwdItemCopyKey = utils.createKey(
-                                "pwdItemCopyBtn",
-                                frameCount,
-                                envconut,
-                                pwdCount,
-                                pwdKeyCount,
+                                "pwdItemBtn", pwdDataId, pwdKey, "copy"
                             )
 
                             pwdItemFrame = tk.Frame(
@@ -320,15 +353,12 @@ class PwdBookFrame(BaseFrame):
                             )
 
                             if pwdKey == "labels":
-                                labelCount = 0
                                 for pwdLabel in pwdValue:
                                     pwdValueLabelKey = utils.createKey(
                                         "pwdValueLabel",
-                                        frameCount,
-                                        envconut,
-                                        pwdCount,
-                                        pwdKeyCount,
-                                        labelCount,
+                                        pwdDataId,
+                                        pwdKey,
+                                        pwdLabel,
                                     )
                                     pwdValueLabel = tk.Label(
                                         pwdItemFrame,
@@ -338,20 +368,11 @@ class PwdBookFrame(BaseFrame):
                                     self.cacheWidget(
                                         pwdValueLabel, pwdItemFrameKey, pwdValueLabelKey
                                     )
-                                    labelCount += 1
                                 pwdValueEditKey = utils.createKey(
-                                    "pwdValueEditBtn",
-                                    frameCount,
-                                    envconut,
-                                    pwdCount,
-                                    pwdKeyCount,
+                                    "pwdItemBtn", pwdDataId, pwdKey, "edit"
                                 )
                                 pwdValueDelKey = utils.createKey(
-                                    "pwdValueDelBtn",
-                                    frameCount,
-                                    envconut,
-                                    pwdCount,
-                                    pwdKeyCount,
+                                    "pwdItemBtn", pwdDataId, pwdKey, "del"
                                 )
                                 pwdValueEditBtn = tk.Label(
                                     pwdItemFrame,
@@ -362,6 +383,19 @@ class PwdBookFrame(BaseFrame):
                                     pwdItemFrame,
                                     image=self.getImage("delete", "pwdbookIcon"),
                                     cnf=self.getCnf(pwdValueDelKey),
+                                )
+                                pwdValueDelBtn.bind(
+                                    Event.MouseLeftClick,
+                                    utils.eventAdaptor(
+                                        self.loadDeleteDialog,
+                                        eventInfo={
+                                            "groupKey": groupKey,
+                                            "envKey": envkey,
+                                            "widget": pwdDataFrameKey,
+                                            "id": pwdDataId,
+                                            "method": self.clickDeletePwdData,
+                                        },
+                                    ),
                                 )
                                 self.cacheWidget(
                                     pwdValueEditBtn, pwdItemFrameKey, pwdValueEditKey
@@ -399,15 +433,11 @@ class PwdBookFrame(BaseFrame):
                                     cnf=self.getCnf(pwdItemCopyKey),
                                 )
 
+                                pwdItemCopyBtn.bind(Event.MouseLeftClick,utils.eventAdaptor(self.clickCopy,text=pwdValue))
+
                                 self.cacheWidget(
                                     pwdItemCopyBtn, pwdItemFrameKey, pwdItemCopyKey
                                 )
                                 self.cacheWidget(
                                     pwdItemValue, pwdItemFrameKey, pwdItemValueKey
                                 )
-                        pwdKeyCount += 1
-                    pwdCount += 1
-                envconut += 1
-            frameCount += 1
-
-        self.refreshCanvas()

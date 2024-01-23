@@ -73,14 +73,16 @@ class WidgetController:
     def __destroyWidget(self, key: str) -> None:
         """执行控件destory"""
         if key not in self.relations:
-            raise Exception("键名%s不存在" % key)
+            return
+            # raise Exception("键名%s不存在" % key)
         self.widgetPool.pop(key).destroy()
         self.relations.pop(key)
 
     def __popChilds(self, key: str) -> list:
         """获取子控件关键字"""
         if key not in self.relations:
-            raise Exception("键名%s不存在" % key)
+            return []
+            # raise Exception("键名%s不存在" % key)
         childs = deepcopy(self.relations[key]["childs"])
         self.relations[key]["childs"] = []
         return childs

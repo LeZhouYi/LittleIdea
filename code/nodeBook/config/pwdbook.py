@@ -49,3 +49,10 @@ class PwdBook:
         """删除Env及其数据"""
         if groupKey in self.data and envKey in self.data[groupKey]:
             self.data[groupKey].pop(envKey)
+
+    def deleteData(self,groupKey:str,envKey:str,id:str)->None:
+        """删除密码数据"""
+        if groupKey in self.data and envKey in self.data[groupKey]:
+            for data in self.data[groupKey][envKey]:
+                if data["id"]==id:
+                    self.data[groupKey][envKey].remove(data)

@@ -56,15 +56,15 @@ class MainFrame(BaseFrame):
 
     def onWindowResize(self,event) -> None:
         """处理窗口刷新事件"""
-        # 获取窗口的宽度和高度
-        width = self.mainWindow.winfo_width()
-        height = self.mainWindow.winfo_height()
-        # 获取窗口左上角在屏幕上的位置
-        x = self.mainWindow.winfo_rootx()
-        y = self.mainWindow.winfo_rooty()
-        if self.getConfig().hasWindowResize(width,height):
-            self.getConfig().setGeometry(width, height, x, y)
-            self.refreshCanvas()
+        # # 获取窗口的宽度和高度
+        # width = self.mainWindow.winfo_width()
+        # height = self.mainWindow.winfo_height()
+        # # 获取窗口左上角在屏幕上的位置
+        # x = self.mainWindow.winfo_rootx()
+        # y = self.mainWindow.winfo_rooty()
+        # if self.getConfig().hasWindowResize(width,height):
+        #     self.getConfig().setGeometry(width, height, x, y)
+        #     self.refreshCanvas()
 
     def onMouseScroll(self,event):
         """滚动事件"""
