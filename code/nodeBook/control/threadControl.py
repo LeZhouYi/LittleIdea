@@ -38,6 +38,6 @@ class ThreadController:
         if key in self.threadPool:
             threadNow = self.threadPool[key]
             if threadNow.is_alive():
-                return
+                stopThread(threadNow)
         self.threadPool[key]=thread
         thread.start()

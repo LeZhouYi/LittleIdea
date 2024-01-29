@@ -2,6 +2,7 @@ import os
 import json
 import re
 from copy import deepcopy
+from utils import utils
 
 """控件相关个性配置"""
 
@@ -9,15 +10,7 @@ from copy import deepcopy
 class Style:
     def __init__(self, filePath: str) -> None:
         self.filePath = filePath  # 本地配置文件路径
-        self.cnfs = {}  # 样式数据集
-        self.loadByFile()
-
-    def loadByFile(self) -> None:
-        """从文件中读取数据"""
-        file = os.path.join(os.getcwd(), self.filePath)
-        if os.path.exists(file):
-            with open(file, encoding="utf-8") as f:
-                self.cnfs = json.load(f)
+        self.cnfs = utils.loadJsonByFile(self.filePath)  # 样式数据集
 
     def getCnf(self, key: str) -> dict:
         """获取控件配置"""

@@ -1,6 +1,6 @@
 from config.config import Config
-from config.style import Style
 from config.page import Page
+from control.style import Style
 from control.widgetControl import WidgetController
 from control.threadControl import ThreadController
 from control.sourceControl import ImageController
